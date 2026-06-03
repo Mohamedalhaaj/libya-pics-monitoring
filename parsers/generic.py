@@ -14,9 +14,14 @@ class GenericListParser(BaseParser):
         soup = BeautifulSoup(html, "html.parser")
         selectors = self.source["selectors"]
         articles: list[Article] = []
+        nodes = soup.select(selectors["article"])
+        if not nodes:
+            nodes = soup.select("article, a[href], h1, h2, h3, h4")
 
-        for item in soup.select(selectors["article"]):
+        for item in nodes:
             title_node = item.select_one(selectors["title"])
+            if not title_node and item.name == "a":
+                title_node = item
             if not title_node:
                 continue
             title = " ".join(title_node.get_text(" ", strip=True).split())
@@ -25,7 +30,7 @@ class GenericListParser(BaseParser):
 
             link_node = title_node if title_node.name == "a" else item.select_one(selectors.get("url", "a[href]"))
             href = link_node.get("href") if link_node else ""
-            url = urljoin(self.source["url"], href) if href else self.source["url"]
+            url = urljoin(self.collection_url, href) if href else self.collection_url
 
             summary = ""
             if selectors.get("summary"):
@@ -46,8 +51,6 @@ class GenericListParser(BaseParser):
                     section = section_node.get_text(" ", strip=True)
 
             matched_keywords = match_keywords(f"{title} {summary}", self.keywords)
-            if self.source.get("require_keyword_match", True) and not matched_keywords:
-                continue
 
             articles.append(
                 Article(
@@ -60,6 +63,9 @@ class GenericListParser(BaseParser):
                     published_at=parse_article_date(date_value),
                     summary=summary,
                     section=section,
+                    raw_date=date_value,
+                    date_source="markup" if date_value else "",
+                    collection_url=self.collection_url,
                     matched_keywords=matched_keywords,
                 )
             )

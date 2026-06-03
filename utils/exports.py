@@ -20,6 +20,10 @@ ARTICLE_FIELDS = [
     "published_at",
     "summary",
     "section",
+    "section_guess",
+    "raw_date",
+    "date_source",
+    "collection_url",
     "matched_keywords",
 ]
 
@@ -29,6 +33,11 @@ VERIFICATION_FIELDS = [
     "url",
     "status",
     "articles_found",
+    "pages_checked",
+    "links_found",
+    "candidates_found",
+    "date_uncertain_items",
+    "zero_reason",
     "error",
     "checked_at",
 ]
@@ -54,6 +63,10 @@ def write_verification_csv(verifications: list[SourceVerification], path: str | 
         writer.writeheader()
         for verification in verifications:
             writer.writerow(verification.to_row())
+
+
+def write_date_uncertain_csv(articles: list[Article], path: str | Path) -> None:
+    write_articles_csv(articles, path)
 
 
 def write_word_report(articles: list[Article], verifications: list[SourceVerification], path: str | Path) -> None:

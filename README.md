@@ -11,7 +11,9 @@ Python media monitoring system for collecting Libya-related headlines from appro
 - Date filtering with optional handling for undated source items
 - CSV output for collected headlines
 - CSV verification table for source checks
-- Word report generation for daily reporting
+- Word report generation utilities for later editorial workflows
+- Search/archive fallback collection using source-specific URL plans
+- Date-uncertain candidate export for editorial review
 - Logging and retry handling
 
 ## Repository Structure
@@ -58,19 +60,29 @@ Add custom keywords:
 python scraper.py --keyword "elections" --keyword "انتخابات"
 ```
 
-Keep source items that do not expose a machine-readable date:
+Review source items that do not expose a machine-readable date:
 
 ```bash
-python scraper.py --start-date 2026-06-03 --end-date 2026-06-03 --keep-undated
+python scraper.py --start-date 2026-06-03 --end-date 2026-06-03
+```
+
+Then inspect `output/date_uncertain_items.csv`.
+
+Run a focused maintenance check for one source:
+
+```bash
+python scraper.py --source-id al_wasat --start-date 2026-06-03 --end-date 2026-06-03
 ```
 
 Outputs are written to `output/`:
 
 - `libya_media_headlines.csv`
 - `source_verification_table.csv`
-- `unsmil_pics_daily_media_report.docx`
+- `date_uncertain_items.csv`
 
 Logs are written to `logs/scraper.log`.
+
+The scraper also prints a terminal summary showing articles collected per source, failed sources, zero-article sources, and the reason each source returned no dated articles.
 
 ## Source Configuration
 
@@ -126,5 +138,5 @@ Use custom parsers when a source needs special handling beyond config-driven CSS
 
 - Review and approve all sources before adding them to `sources.json`.
 - CSS selectors may need maintenance when publishers redesign pages.
-- For strict daily products, run with `--start-date`, `--end-date`, and without `--keep-undated`.
-- Generated Word reports are intended as first-draft monitoring products and should be editorially reviewed before distribution.
+- For strict daily products, run with `--start-date` and `--end-date`, then review `date_uncertain_items.csv`.
+- The scraper intentionally does not generate a Word report automatically from raw collection output. Use the CSVs for editorial verification before producing a narrative report.
