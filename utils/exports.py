@@ -1,43 +1,41 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime
 from pathlib import Path
-
-from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from utils.models import Article, SourceVerification
 
 
 ARTICLE_FIELDS = [
-    "source_id",
     "source_name",
-    "language",
-    "country_focus",
-    "title",
-    "url",
-    "published_at",
-    "summary",
-    "section",
+    "source_language",
+    "headline_original",
+    "headline_english_placeholder",
+    "article_url",
+    "publication_date",
+    "article_snippet",
     "section_guess",
-    "raw_date",
-    "date_source",
-    "collection_url",
-    "matched_keywords",
+    "relevance_reason",
+    "date_status",
+    "include_candidate",
+    "duplicate_key",
+    "parser_used",
+    "notes",
 ]
 
 VERIFICATION_FIELDS = [
-    "source_id",
     "source_name",
-    "url",
-    "status",
-    "articles_found",
-    "pages_checked",
-    "links_found",
-    "candidates_found",
-    "date_uncertain_items",
-    "zero_reason",
+    "source_url",
+    "fetch_status",
+    "candidate_links_found",
+    "article_pages_opened",
+    "date_parsed_count",
+    "accepted_count",
+    "rejected_date_count",
+    "rejected_relevance_count",
+    "uncertain_date_count",
+    "failed_count",
+    "zero_result_reason",
     "error",
     "checked_at",
 ]
@@ -67,44 +65,3 @@ def write_verification_csv(verifications: list[SourceVerification], path: str | 
 
 def write_date_uncertain_csv(articles: list[Article], path: str | Path) -> None:
     write_articles_csv(articles, path)
-
-
-def write_word_report(articles: list[Article], verifications: list[SourceVerification], path: str | Path) -> None:
-    document = Document()
-    title = document.add_heading("UNSMIL/PICS Daily Libya Media Monitoring Report", level=0)
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    document.add_paragraph(f"Generated: {datetime.utcnow().isoformat(timespec='seconds')}Z")
-    document.add_paragraph(f"Total relevant items: {len(articles)}")
-
-    document.add_heading("Headlines", level=1)
-    if not articles:
-        document.add_paragraph("No matching Libya-related articles were collected for the selected date range.")
-    for article in articles:
-        heading = document.add_heading(article.title, level=2)
-        if article.language == "ar":
-            heading.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        metadata = document.add_paragraph()
-        metadata.add_run("Source: ").bold = True
-        metadata.add_run(article.source_name)
-        metadata.add_run(" | Language: ").bold = True
-        metadata.add_run(article.language)
-        metadata.add_run(" | Published: ").bold = True
-        metadata.add_run(article.published_at.isoformat() if article.published_at else "Unknown")
-        document.add_paragraph(article.summary or "No summary available.")
-        document.add_paragraph(article.url)
-
-    document.add_heading("Source Verification", level=1)
-    table = document.add_table(rows=1, cols=5)
-    table.style = "Table Grid"
-    headers = ["Source", "URL", "Status", "Articles", "Error"]
-    for index, header in enumerate(headers):
-        table.rows[0].cells[index].text = header
-    for verification in verifications:
-        cells = table.add_row().cells
-        cells[0].text = verification.source_name
-        cells[1].text = verification.url
-        cells[2].text = verification.status
-        cells[3].text = str(verification.articles_found)
-        cells[4].text = verification.error
-
-    document.save(path)

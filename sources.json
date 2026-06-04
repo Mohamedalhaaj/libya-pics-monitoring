@@ -6,7 +6,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://alwasat.ly/news/libya",
-      "parser": "generic_list",
+      "parser": "al_wasat",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -16,7 +16,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://alwasat.ly/news",
+        "https://alwasat.ly/"
+      ]
     },
     {
       "id": "rna_reportage",
@@ -24,7 +28,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://reportage.ly/",
-      "parser": "generic_list",
+      "parser": "rna_reportage",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -34,7 +38,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://reportage.ly/",
+        "https://reportage.ly/?s=%D9%84%D9%8A%D8%A8%D9%8A%D8%A7"
+      ]
     },
     {
       "id": "ean_libya",
@@ -42,7 +50,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://www.eanlibya.com/",
-      "parser": "generic_list",
+      "parser": "ean_libya",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -52,7 +60,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://www.eanlibya.com/",
+        "https://www.eanlibya.com/?s=%D9%84%D9%8A%D8%A8%D9%8A%D8%A7"
+      ]
     },
     {
       "id": "libya_observer",
@@ -60,7 +72,7 @@
       "language": "en",
       "country_focus": "Libya",
       "url": "https://libyaobserver.ly/news",
-      "parser": "generic_list",
+      "parser": "libya_observer",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -70,7 +82,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://libyaobserver.ly/news",
+        "https://libyaobserver.ly/"
+      ]
     },
     {
       "id": "libya_review",
@@ -78,7 +94,7 @@
       "language": "en",
       "country_focus": "Libya",
       "url": "https://libyareview.com/",
-      "parser": "generic_list",
+      "parser": "libya_review",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -88,7 +104,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://libyareview.com/category/libya/",
+        "https://libyareview.com/"
+      ]
     },
     {
       "id": "al_shahed",
@@ -96,7 +116,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://lywitness.com/",
-      "parser": "generic_list",
+      "parser": "al_shahed",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -106,7 +126,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://lywitness.com/category/libya/",
+        "https://lywitness.com/"
+      ]
     },
     {
       "id": "al_marsad",
@@ -168,7 +192,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://www.addresslibya.com/",
-      "parser": "generic_list",
+      "parser": "address_libya",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -178,7 +202,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://www.addresslibya.com/libya/",
+        "https://www.addresslibya.com/"
+      ]
     },
     {
       "id": "lana",
@@ -186,7 +214,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://lana.gov.ly/",
-      "parser": "generic_list",
+      "parser": "lana",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -196,7 +224,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://lana.gov.ly/category.php?lang=ar&id=8",
+        "https://lana.gov.ly/"
+      ]
     },
     {
       "id": "asharq_al_awsat",
@@ -258,7 +290,7 @@
       "language": "en",
       "country_focus": "Libya",
       "url": "https://libyaherald.com/",
-      "parser": "generic_list",
+      "parser": "libya_herald",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -268,7 +300,11 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "fallback_urls": [
+        "https://libyaherald.com/category/libya/",
+        "https://libyaherald.com/"
+      ]
     },
     {
       "id": "al_menassa",
