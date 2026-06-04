@@ -17,8 +17,13 @@ class Article:
     summary: str = ""
     section: str = ""
     section_guess: str = ""
+    subsection_guess: str = ""
+    relevance_status: str = "unchecked"
     relevance_reason: str = ""
     date_status: str = "missing_date"
+    duplicate_status: str = "unique"
+    qa_status: str = "needs_review"
+    qa_notes: str = ""
     include_candidate: bool = False
     duplicate_key: str = ""
     parser_used: str = ""
@@ -42,8 +47,13 @@ class Article:
             "publication_date": self.published_at.date().isoformat() if self.published_at else "",
             "article_snippet": self.summary,
             "section_guess": self.section_guess,
-            "relevance_reason": self.relevance_reason,
+            "subsection_guess": self.subsection_guess,
             "date_status": self.date_status,
+            "relevance_status": self.relevance_status,
+            "relevance_reason": self.relevance_reason,
+            "duplicate_status": self.duplicate_status,
+            "qa_status": self.qa_status,
+            "qa_notes": self.qa_notes,
             "include_candidate": "yes" if self.include_candidate else "no",
             "duplicate_key": self.duplicate_key,
             "parser_used": self.parser_used,
@@ -66,6 +76,7 @@ class SourceVerification:
     failed_count: int = 0
     zero_result_reason: str = ""
     error: str = ""
+    notes: str = ""
     checked_at: datetime = field(default_factory=datetime.utcnow)
 
     def to_row(self) -> dict[str, Any]:
@@ -83,6 +94,7 @@ class SourceVerification:
             "failed_count": self.failed_count,
             "zero_result_reason": self.zero_result_reason,
             "error": self.error,
+            "notes": self.notes,
             "checked_at": self.checked_at.isoformat(timespec="seconds") + "Z",
         }
 

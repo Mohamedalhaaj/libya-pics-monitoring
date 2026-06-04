@@ -15,8 +15,13 @@ ARTICLE_FIELDS = [
     "publication_date",
     "article_snippet",
     "section_guess",
-    "relevance_reason",
+    "subsection_guess",
     "date_status",
+    "relevance_status",
+    "relevance_reason",
+    "duplicate_status",
+    "qa_status",
+    "qa_notes",
     "include_candidate",
     "duplicate_key",
     "parser_used",
@@ -37,6 +42,7 @@ VERIFICATION_FIELDS = [
     "failed_count",
     "zero_result_reason",
     "error",
+    "notes",
     "checked_at",
 ]
 

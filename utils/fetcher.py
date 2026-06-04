@@ -25,6 +25,7 @@ class FetchResult:
     url: str
     html: str
     final_url: str
+    status_code: int | None = None
 
 
 class BrowserFetcher:
@@ -77,11 +78,16 @@ class BrowserFetcher:
                 page = await self._browser.new_page()
                 await page.set_extra_http_headers(DEFAULT_HEADERS)
                 page.set_default_timeout(self.timeout_ms)
-                await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_ms)
+                response = await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_ms)
                 if wait_for_selector:
                     await page.wait_for_selector(wait_for_selector, timeout=self.timeout_ms)
                 html = await page.content()
-                return FetchResult(url=url, html=html, final_url=page.url)
+                return FetchResult(
+                    url=url,
+                    html=html,
+                    final_url=page.url,
+                    status_code=response.status if response else None,
+                )
             except Exception as exc:  # Playwright raises several transport-specific subclasses.
                 last_error = exc
                 logger.warning("Fetch failed for %s on attempt %s/%s: %s", url, attempt, self.retries, exc)
@@ -101,4 +107,4 @@ class BrowserFetcher:
             allow_redirects=True,
         )
         response.raise_for_status()
-        return FetchResult(url=url, html=response.text, final_url=response.url)
+        return FetchResult(url=url, html=response.text, final_url=response.url, status_code=response.status_code)

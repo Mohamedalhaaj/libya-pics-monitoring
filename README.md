@@ -9,7 +9,7 @@ Python media monitoring system for collecting Libya-related headlines from appro
 - Source configuration in `sources.json`
 - Arabic and English keyword support
 - Date filtering with optional handling for undated source items
-- CSV output for collected headlines
+- CSV outputs for raw candidates, editorial review, and approved headlines
 - CSV verification table for source checks
 - Source-by-source debug report for extraction and zero-result diagnosis
 - Search/archive fallback collection using source-specific URL plans
@@ -55,7 +55,7 @@ playwright install chromium
 Run the monitor for a specific date range:
 
 ```bash
-python scraper.py --start-date 2026-06-01 --end-date 2026-06-03
+python scraper.py --start-date 2026-06-01 --end-date 2026-06-02
 ```
 
 Add custom keywords:
@@ -78,16 +78,25 @@ Run a focused maintenance check for one source:
 python scraper.py --source-id al_wasat --start-date 2026-06-03 --end-date 2026-06-03
 ```
 
+Run extraction diagnostics for one source:
+
+```bash
+python scraper.py --debug-source "Al Wasat" --start-date 2026-06-01 --end-date 2026-06-02
+```
+
 Outputs are written to `output/`:
 
 - `libya_media_headlines.csv`
+- `raw_candidates.csv`
+- `review_queue.csv`
+- `approved_headlines.csv`
 - `source_verification_table.csv`
 - `date_uncertain_items.csv`
 - `source_debug_report.csv`
 
 Logs are written to `logs/scraper.log`.
 
-The scraper also prints a terminal summary showing articles collected per source, failed sources, zero-article sources, and the reason each source returned no accepted articles. Zero-source reasons use the operational labels `selector_failed`, `no_article_links_found`, `date_parse_failed`, and `all_filtered_out`.
+The scraper also prints a terminal summary showing articles collected per source, failed sources, zero-article sources, and the reason each source returned no accepted articles. Zero-source reasons include `no_links_found`, `fetch_failed`, `date_parsing_failed`, `all_items_outside_date_window`, `all_items_failed_relevance_filter`, `selector_failed`, `blocked_by_site`, and `unknown`.
 
 ## Source Configuration
 

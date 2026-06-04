@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from parsers import get_parser
-from parsers.common import extract_article_page_details
+from parsers.common import clean_text, extract_article_page_details, is_noise_link, is_probable_article_url, normalize_url, page_metadata_flags, soup_from_html
 from utils.config import load_sources
 from utils.dates import in_date_range, parse_cli_date, parse_date_from_url
 from utils.exports import (
@@ -144,6 +144,34 @@ LIBYA_KEYWORDS = [
     "حقوق الإنسان",
 ]
 
+EXPLICIT_LIBYA_KEYWORDS = [
+    "libya",
+    "libyan",
+    "tripoli",
+    "benghazi",
+    "misrata",
+    "derna",
+    "zawiya",
+    "brega",
+    "sebha",
+    "zuwara",
+    "unsmil",
+    "ليبيا",
+    "ليبي",
+    "الليبي",
+    "الليبية",
+    "طرابلس",
+    "بنغازي",
+    "مصراتة",
+    "درنة",
+    "الزاوية",
+    "سبها",
+    "زوارة",
+    "البريقة",
+    "الخليج العربي للنفط",
+    "البعثة الأممية",
+]
+
 LIBYA_SOURCE_IDS = {
     "al_wasat",
     "ean_libya",
@@ -217,7 +245,7 @@ async def scrape_source(
     end_date: datetime | None,
     max_pages: int,
     max_article_pages: int,
-) -> tuple[list[Article], list[Article], SourceVerification]:
+) -> tuple[list[Article], list[Article], list[Article], SourceVerification]:
     collection_urls = build_collection_urls(source, keywords, start_date)[:max_pages]
     collection_urls.extend(source.get("fallback_urls", []))
     collection_urls = dedupe_values(collection_urls)
@@ -252,13 +280,24 @@ async def scrape_source(
     enriched_candidates: list[Article] = []
     for article in parsed_candidates[:max_article_pages]:
         try:
-            result = await fetcher.fetch(article.url)
+            result = await asyncio.to_thread(fetcher.fetch_with_requests, article.url)
             article_pages_opened += 1
             enriched_candidates.append(extract_article_page_details(result.html, article))
-        except Exception as exc:
-            article_fetch_errors.append(f"{article.url}: {exc}")
-            logger.warning("Article fetch failed for source=%s url=%s error=%s", source["id"], article.url, exc)
-            enriched_candidates.append(article)
+        except Exception as requests_exc:
+            try:
+                result = await fetcher.fetch(article.url)
+                article_pages_opened += 1
+                enriched_candidates.append(extract_article_page_details(result.html, article))
+            except Exception as exc:
+                article_fetch_errors.append(f"{article.url}: requests={requests_exc}; playwright={exc}")
+                logger.warning(
+                    "Article fetch failed for source=%s url=%s requests=%s playwright=%s",
+                    source["id"],
+                    article.url,
+                    requests_exc,
+                    exc,
+                )
+                enriched_candidates.append(article)
 
     if len(parsed_candidates) > max_article_pages:
         logger.info(
@@ -271,7 +310,8 @@ async def scrape_source(
 
     parsed_candidates = deduplicate_articles(enriched_candidates)
     accepted: list[Article] = []
-    uncertain: list[Article] = []
+    review_queue: list[Article] = []
+    raw_candidates: list[Article] = []
     rejected_date_count = 0
     rejected_relevance_count = 0
     date_parsed_count = 0
@@ -280,9 +320,13 @@ async def scrape_source(
         enrich_article(article, start_date)
         relevance_ok, relevance_reason = check_libya_relevance(article, source)
         article.relevance_reason = relevance_reason
+        article.relevance_status = "accepted" if relevance_ok else "rejected"
         if not relevance_ok:
             article.notes = "not_libya_related"
+            article.qa_status = "rejected"
+            article.qa_notes = "Rejected by Libya relevance filter"
             rejected_relevance_count += 1
+            raw_candidates.append(article)
             continue
 
         date_status = classify_date(article, start_date, end_date)
@@ -291,13 +335,20 @@ async def scrape_source(
             date_parsed_count += 1
         if date_status == "in_range":
             article.include_candidate = True
+            article.qa_status = "approved"
+            article.qa_notes = "Reliable date inside target window and Libya-relevant"
             accepted.append(article)
         elif date_status in {"missing_date", "ambiguous_date"}:
             article.notes = date_status
-            uncertain.append(article)
+            article.qa_status = "needs_review"
+            article.qa_notes = "Date missing or uncertain; not approved automatically"
+            review_queue.append(article)
         else:
             article.notes = "outside_date_window"
+            article.qa_status = "rejected"
+            article.qa_notes = "Publication date outside target window"
             rejected_date_count += 1
+        raw_candidates.append(article)
 
     verification = SourceVerification(
         source_name=source["name"],
@@ -309,7 +360,7 @@ async def scrape_source(
         accepted_count=len(accepted),
         rejected_date_count=rejected_date_count,
         rejected_relevance_count=rejected_relevance_count,
-        uncertain_date_count=len(uncertain),
+        uncertain_date_count=len(review_queue),
         failed_count=len(errors) + len(article_fetch_errors),
         zero_result_reason=determine_zero_reason(
             fetched_pages=len(fetched_urls),
@@ -319,7 +370,7 @@ async def scrape_source(
             accepted_count=len(accepted),
             rejected_date_count=rejected_date_count,
             rejected_relevance_count=rejected_relevance_count,
-            uncertain_date_count=len(uncertain),
+            uncertain_date_count=len(review_queue),
             errors=[*errors, *article_fetch_errors],
         ),
         error=" | ".join([*errors, *article_fetch_errors][:3]),
@@ -336,11 +387,11 @@ async def scrape_source(
             len(accepted),
             rejected_date_count,
             rejected_relevance_count,
-            len(uncertain),
+            len(review_queue),
             " | ".join(errors),
         )
 
-    return accepted, uncertain, verification
+    return raw_candidates, accepted, review_queue, verification
 
 
 async def run(args: argparse.Namespace) -> None:
@@ -355,8 +406,9 @@ async def run(args: argparse.Namespace) -> None:
     keywords = DEFAULT_KEYWORDS + args.keyword
 
     logger.info("Loaded %s enabled sources", len(sources))
-    all_articles: list[Article] = []
-    date_uncertain_articles: list[Article] = []
+    raw_candidates: list[Article] = []
+    approved_articles: list[Article] = []
+    review_queue_articles: list[Article] = []
     verifications: list[SourceVerification] = []
 
     async with BrowserFetcher(
@@ -365,8 +417,19 @@ async def run(args: argparse.Namespace) -> None:
         retry_delay_seconds=args.retry_delay,
         headless=not args.show_browser,
     ) as fetcher:
+        if args.debug_source:
+            await debug_source(
+                args.debug_source,
+                sources,
+                fetcher,
+                keywords,
+                start_date,
+                args.max_pages_per_source,
+            )
+            return
+
         for source in sources:
-            articles, uncertain_articles, verification = await scrape_source(
+            source_raw, source_approved, source_review, verification = await scrape_source(
                 source=source,
                 fetcher=fetcher,
                 keywords=keywords,
@@ -375,27 +438,37 @@ async def run(args: argparse.Namespace) -> None:
                 max_pages=args.max_pages_per_source,
                 max_article_pages=args.max_article_pages_per_source,
             )
-            all_articles.extend(articles)
-            date_uncertain_articles.extend(uncertain_articles)
+            raw_candidates.extend(source_raw)
+            approved_articles.extend(source_approved)
+            review_queue_articles.extend(source_review)
             verifications.append(verification)
 
-    all_articles = deduplicate_articles(all_articles)
-    date_uncertain_articles = deduplicate_articles(date_uncertain_articles)
-    all_articles.sort(key=lambda article: article.published_at or datetime.min, reverse=True)
+    raw_candidates = deduplicate_articles(raw_candidates)
+    approved_articles = deduplicate_articles(approved_articles)
+    review_queue_articles = deduplicate_articles(review_queue_articles)
+    approved_articles.sort(key=lambda article: article.published_at or datetime.min, reverse=True)
 
-    articles_csv = output_dir / "libya_media_headlines.csv"
+    raw_csv = output_dir / "raw_candidates.csv"
+    approved_csv = output_dir / "approved_headlines.csv"
+    legacy_articles_csv = output_dir / "libya_media_headlines.csv"
+    review_queue_csv = output_dir / "review_queue.csv"
     verification_csv = output_dir / "source_verification_table.csv"
     uncertain_csv = output_dir / "date_uncertain_items.csv"
     debug_csv = output_dir / "source_debug_report.csv"
 
-    write_articles_csv(all_articles, articles_csv)
+    write_articles_csv(raw_candidates, raw_csv)
+    write_articles_csv(approved_articles, approved_csv)
+    write_articles_csv(approved_articles, legacy_articles_csv)
+    write_articles_csv(review_queue_articles, review_queue_csv)
     write_verification_csv(verifications, verification_csv)
-    write_date_uncertain_csv(date_uncertain_articles, uncertain_csv)
+    write_date_uncertain_csv(review_queue_articles, uncertain_csv)
     write_debug_report_csv(verifications, debug_csv)
 
-    logger.info("Wrote %s accepted articles to %s", len(all_articles), articles_csv)
+    logger.info("Wrote %s raw candidates to %s", len(raw_candidates), raw_csv)
+    logger.info("Wrote %s approved articles to %s", len(approved_articles), approved_csv)
+    logger.info("Wrote %s review queue articles to %s", len(review_queue_articles), review_queue_csv)
     logger.info("Wrote verification table to %s", verification_csv)
-    logger.info("Wrote %s date-uncertain candidates to %s", len(date_uncertain_articles), uncertain_csv)
+    logger.info("Wrote %s date-uncertain candidates to %s", len(review_queue_articles), uncertain_csv)
     logger.info("Wrote source debug report to %s", debug_csv)
     print_terminal_summary(verifications)
 
@@ -404,16 +477,22 @@ def enrich_article(article: Article, start_date: datetime | None) -> None:
     if article.published_at is None:
         url_date = parse_date_from_url(article.url)
         if url_date:
-            if start_date and is_month_only_url(article.url) and same_month(url_date, start_date):
-                url_date = start_date
-            article.published_at = url_date
-            article.date_source = "url"
+            if is_month_only_url(article.url):
+                article.date_status = "ambiguous_date"
+                article.raw_date = article.raw_date or article.url
+                article.date_source = "url_month_only"
+            else:
+                article.published_at = url_date
+                article.date_source = "url"
     if article.published_at:
         article.date_status = "parsed"
     article.section_guess = guess_section(article)
+    article.subsection_guess = guess_subsection(article)
 
 
 def classify_date(article: Article, start_date: datetime | None, end_date: datetime | None) -> str:
+    if article.date_source == "url_month_only":
+        return "ambiguous_date"
     if article.published_at is None:
         return "missing_date"
     if start_date is None and end_date is None:
@@ -426,9 +505,11 @@ def classify_date(article: Article, start_date: datetime | None, end_date: datet
 def check_libya_relevance(article: Article, source: dict) -> tuple[bool, str]:
     url_path = unquote(urlparse(article.url).path)
     text = f"{article.title} {article.summary} {url_path} {article.section}".casefold()
-    matched = [keyword for keyword in LIBYA_KEYWORDS if keyword.casefold() in text]
+    matched = [keyword for keyword in EXPLICIT_LIBYA_KEYWORDS if keyword.casefold() in text]
     if matched:
         return True, f"keyword_match:{matched[0]}"
+    if source["id"] == "lana":
+        return False, "lana_requires_explicit_libya_angle"
     topical_match = next((keyword for keyword in PUBLIC_AFFAIRS_KEYWORDS if keyword.casefold() in text), "")
     if source["id"] in LIBYA_SOURCE_IDS and topical_match:
         return True, f"libya_source_topic:{topical_match}"
@@ -453,6 +534,26 @@ def is_month_only_url(url: str) -> bool:
 
 def same_month(left: datetime, right: datetime) -> bool:
     return left.year == right.year and left.month == right.month
+
+
+def guess_subsection(article: Article) -> str:
+    text = f"{article.section} {article.title} {article.summary}".casefold()
+    markers = [
+        ("UNSMIL", ["unsmil", "البعثة الأممية"]),
+        ("Government", ["government", "حكومة", "وزارة", "وزير"]),
+        ("Elections", ["election", "انتخابات"]),
+        ("Security", ["security", "armed", "clashes", "أمن", "اشتباك", "مسلح"]),
+        ("Migration", ["migration", "migrant", "refugee", "هجرة", "مهاجر", "لاجئ"]),
+        ("Oil & Energy", ["oil", "fuel", "noc", "brega", "نفط", "وقود", "البريقة"]),
+        ("Banking", ["central bank", "currency", "مصرف", "عملة"]),
+        ("Municipal Services", ["municipality", "public services", "بلدية", "خدمات"]),
+        ("Health", ["health", "hospital", "صحة", "مستشفى"]),
+        ("Foreign Relations", ["italy", "tunisia", "egypt", "إيطاليا", "تونس", "مصر"]),
+    ]
+    for subsection, words in markers:
+        if any(word in text for word in words):
+            return subsection
+    return article.section_guess or "General"
 
 
 def guess_section(article: Article) -> str:
@@ -514,12 +615,19 @@ def determine_zero_reason(
     if accepted_count:
         return ""
     if fetched_pages == 0 and errors:
-        return "selector_failed"
+        error_text = " ".join(errors).casefold()
+        if any(marker in error_text for marker in ("403", "cloudflare", "captcha", "access denied")):
+            return "blocked_by_site"
+        return "fetch_failed"
     if candidate_count == 0:
-        return "no_article_links_found"
+        return "no_links_found"
     if article_pages_opened and date_parsed_count == 0 and uncertain_date_count:
-        return "date_parse_failed"
-    return "all_filtered_out"
+        return "date_parsing_failed"
+    if rejected_date_count and rejected_date_count >= candidate_count - rejected_relevance_count - uncertain_date_count:
+        return "all_items_outside_date_window"
+    if rejected_relevance_count and rejected_relevance_count >= candidate_count - rejected_date_count - uncertain_date_count:
+        return "all_items_failed_relevance_filter"
+    return "unknown"
 
 
 def print_terminal_summary(verifications: list[SourceVerification]) -> None:
@@ -534,7 +642,7 @@ def print_terminal_summary(verifications: list[SourceVerification]) -> None:
     print(f"- total candidate links found: {sum(v.candidate_links_found for v in verifications)}")
     print(f"- total article pages opened: {sum(v.article_pages_opened for v in verifications)}")
     print(f"- total accepted items: {sum(v.accepted_count for v in verifications)}")
-    print(f"- total date-uncertain items: {sum(v.uncertain_date_count for v in verifications)}")
+    print(f"- total review queue items: {sum(v.uncertain_date_count for v in verifications)}")
     print(f"- total rejected outside date window: {sum(v.rejected_date_count for v in verifications)}")
     print(f"- total rejected non-Libya items: {sum(v.rejected_relevance_count for v in verifications)}")
 
@@ -563,6 +671,94 @@ def print_terminal_summary(verifications: list[SourceVerification]) -> None:
         print("- None")
 
 
+async def debug_source(
+    requested_source: str,
+    sources: list[dict],
+    fetcher: BrowserFetcher,
+    keywords: list[str],
+    start_date: datetime | None,
+    max_pages: int,
+) -> None:
+    source = find_source(requested_source, sources)
+    if not source:
+        available = ", ".join(source["name"] for source in sources)
+        raise SystemExit(f"Debug source not found: {requested_source}. Available: {available}")
+
+    parser_cls = get_parser(source["parser"])
+    parser_patterns = getattr(parser_cls, "article_url_patterns", ())
+    collection_urls = build_collection_urls(source, keywords, start_date)[:max_pages]
+    collection_urls.extend(source.get("fallback_urls", []))
+    collection_urls = dedupe_values(collection_urls)
+
+    print(f"\nDebug source: {source['name']} ({source['id']})")
+    print(f"- parser: {source['parser']}")
+    print(f"- selectors used: {source.get('selectors', {})}")
+    print(f"- planned URLs: {len(collection_urls)}")
+
+    for collection_url in collection_urls:
+        print(f"\nURL: {collection_url}")
+        try:
+            result = await fetcher.fetch(collection_url)
+        except Exception as exc:
+            print(f"- fetch failed: {exc}")
+            continue
+
+        soup = soup_from_html(result.html)
+        links = []
+        detected = []
+        rejected = []
+        for link in soup.select("a[href]"):
+            title = clean_text(link.get_text(" ", strip=True))
+            url = normalize_url(result.final_url, link.get("href") or "", source["id"])
+            if not url:
+                rejected.append(("", "empty_or_invalid_url"))
+                continue
+            links.append((title, url))
+            if is_noise_link(title, url):
+                rejected.append((url, "noise_link"))
+                continue
+            if not is_probable_article_url(url, parser_patterns):
+                rejected.append((url, "not_probable_article_url"))
+                continue
+            detected.append((title, url))
+
+        has_json_ld, has_open_graph, date_candidates = page_metadata_flags(result.html)
+        page_title = clean_text(soup.title.get_text(" ", strip=True)) if soup.title else ""
+
+        print(f"- page title: {page_title}")
+        print(f"- response status: {result.status_code or ''}")
+        print(f"- final URL: {result.final_url}")
+        print(f"- number of links found: {len(links)}")
+        print(f"- article links detected: {len(detected)}")
+        print(f"- article links rejected: {len(rejected)}")
+        print(f"- JSON-LD found: {'yes' if has_json_ld else 'no'}")
+        print(f"- OpenGraph metadata found: {'yes' if has_open_graph else 'no'}")
+        print(f"- date candidates found: {date_candidates[:20]}")
+
+        print("- first 100 discovered links:")
+        for title, url in links[:100]:
+            print(f"  - {title[:90]} | {url}")
+
+        print("- first 50 detected article links:")
+        for title, url in detected[:50]:
+            print(f"  - {title[:90]} | {url}")
+
+        print("- first 50 rejected links:")
+        for url, reason in rejected[:50]:
+            print(f"  - {reason}: {url}")
+
+
+def find_source(requested_source: str, sources: list[dict]) -> dict | None:
+    needle = requested_source.casefold().strip()
+    for source in sources:
+        if needle in {source["id"].casefold(), source["name"].casefold()}:
+            return source
+    for source in sources:
+        if needle in source["name"].casefold():
+            return source
+    return None
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Collect Libya-related headlines for UNSMIL/PICS media monitoring.")
     parser.add_argument("--sources", default="sources.json", help="Path to source configuration JSON.")
@@ -571,11 +767,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--end-date", help="Inclusive end date, for example 2026-06-02.")
     parser.add_argument("--keyword", action="append", default=[], help="Additional Arabic or English keyword filter.")
     parser.add_argument("--source-id", action="append", default=[], help="Limit run to one or more source IDs.")
-    parser.add_argument("--timeout", type=int, default=30, help="Browser timeout per page in seconds.")
-    parser.add_argument("--retries", type=int, default=3, help="Fetch retry attempts per source.")
+    parser.add_argument("--debug-source", help="Print detailed extraction diagnostics for a source name or ID.")
+    parser.add_argument("--timeout", type=int, default=20, help="Browser timeout per page in seconds.")
+    parser.add_argument("--retries", type=int, default=1, help="Fetch retry attempts per source.")
     parser.add_argument("--retry-delay", type=float, default=2.0, help="Base retry delay in seconds.")
     parser.add_argument("--max-pages-per-source", type=int, default=8, help="Maximum primary/search/archive URLs to fetch per source.")
-    parser.add_argument("--max-article-pages-per-source", type=int, default=80, help="Maximum candidate article pages to open per source.")
+    parser.add_argument("--max-article-pages-per-source", type=int, default=35, help="Maximum candidate article pages to open per source.")
     parser.add_argument("--show-browser", action="store_true", help="Run Playwright with a visible browser.")
     parser.add_argument("--log-file", default="logs/scraper.log", help="Path to scraper log file.")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")

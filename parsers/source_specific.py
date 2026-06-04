@@ -7,6 +7,7 @@ from parsers.common import (
     clean_text,
     deduplicate_articles,
     extract_date,
+    extract_structured_links,
     is_noise_link,
     is_probable_article_url,
     match_keywords,
@@ -34,14 +35,19 @@ class SelectorOverrideParser(GenericListParser):
         soup = soup_from_html(html)
         selectors = self.source["selectors"]
         articles = []
-        for link in soup.select("a[href]"):
-            title = clean_text(link.get_text(" ", strip=True))
-            url = normalize_url(self.collection_url, link.get("href") or "", self.source["id"])
+        link_candidates = [
+            (clean_text(link.get_text(" ", strip=True)), normalize_url(self.collection_url, link.get("href") or "", self.source["id"]), link)
+            for link in soup.select("a[href]")
+        ]
+        link_candidates.extend((title, url, None) for title, url in extract_structured_links(soup, self.collection_url, self.source["id"]))
+
+        for title, url, link in link_candidates:
             if not url or is_noise_link(title, url):
                 continue
             if not is_probable_article_url(url, self.article_url_patterns):
                 continue
-            container = link.find_parent(["article", "li", "div", "tr"]) or link
+            container = link.find_parent(["article", "li", "div", "tr"]) if link else None
+            container = container or link or soup
             published_at, raw_date, date_source = extract_date(container, selectors)
             summary = ""
             summary_node = container.select_one(selectors.get("summary", "p"))

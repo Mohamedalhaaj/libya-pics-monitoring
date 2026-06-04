@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import json
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup, Tag
@@ -200,6 +201,7 @@ def extract_article_page_details(html: str, article: Article) -> Article:
         article.summary = summary
 
     raw_dates = []
+    raw_dates.extend(extract_json_ld_dates(soup))
     for selector in [
         "meta[property='article:published_time']",
         "meta[name='article:published_time']",
@@ -229,6 +231,79 @@ def extract_article_page_details(html: str, article: Article) -> Article:
             article.date_source = "article_page"
             break
     return article
+
+
+def extract_json_ld_dates(soup: BeautifulSoup) -> list[str]:
+    dates: list[str] = []
+    for node in soup.select("script[type='application/ld+json']"):
+        raw = node.string or node.get_text("", strip=True)
+        if not raw:
+            continue
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        for item in flatten_json_ld(payload):
+            if not isinstance(item, dict):
+                continue
+            for key in ("datePublished", "dateCreated", "dateModified", "uploadDate"):
+                value = item.get(key)
+                if isinstance(value, str):
+                    dates.append(value)
+    return dates
+
+
+def flatten_json_ld(payload):
+    if isinstance(payload, list):
+        for item in payload:
+            yield from flatten_json_ld(item)
+    elif isinstance(payload, dict):
+        yield payload
+        graph = payload.get("@graph")
+        if isinstance(graph, list):
+            for item in graph:
+                yield from flatten_json_ld(item)
+
+
+def page_metadata_flags(html: str) -> tuple[bool, bool, list[str]]:
+    soup = soup_from_html(html)
+    has_json_ld = bool(soup.select("script[type='application/ld+json']"))
+    has_open_graph = bool(soup.select("meta[property^='og:'], meta[property^='article:']"))
+    dates = extract_json_ld_dates(soup)
+    dates.extend(find_date_like_text(soup.get_text(" ", strip=True)[:3000]))
+    return has_json_ld, has_open_graph, [clean_text(date) for date in dates if clean_text(date)]
+
+
+def extract_structured_links(soup: BeautifulSoup, base_url: str, source_id: str) -> list[tuple[str, str]]:
+    links: list[tuple[str, str]] = []
+    for selector in ["link[rel='canonical']", "meta[property='og:url']", "meta[name='twitter:url']"]:
+        for node in soup.select(selector):
+            href = node.get("href") or node.get("content") or ""
+            url = normalize_url(base_url, href, source_id)
+            if url:
+                title = first_text(soup, ["meta[property='og:title']", "meta[name='twitter:title']", "title"])
+                links.append((title or url, url))
+
+    for node in soup.select("script[type='application/ld+json']"):
+        raw = node.string or node.get_text("", strip=True)
+        if not raw:
+            continue
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        for item in flatten_json_ld(payload):
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("headline") or item.get("name") or "")
+            value = item.get("url") or item.get("mainEntityOfPage")
+            if isinstance(value, dict):
+                value = value.get("@id")
+            if isinstance(value, str):
+                url = normalize_url(base_url, value, source_id)
+                if url:
+                    links.append((title or url, url))
+    return links
 
 
 def first_text(soup: BeautifulSoup, selectors: list[str]) -> str:
