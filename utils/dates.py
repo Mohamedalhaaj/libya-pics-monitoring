@@ -77,7 +77,14 @@ def normalize_digits(value: str) -> str:
 
 
 def parse_arabic_date(value: str) -> datetime | None:
-    normalized = " ".join(value.replace("،", " ").split())
+    normalized = " ".join(
+        value.replace("،", " ")
+        .replace(":", " ")
+        .replace("تاريخ النشر", " ")
+        .replace("نشر في", " ")
+        .replace("آخر تحديث", " ")
+        .split()
+    )
     for month_name, month_number in ARABIC_MONTHS.items():
         if month_name not in normalized:
             continue
@@ -94,6 +101,14 @@ def parse_arabic_date(value: str) -> datetime | None:
             year = int(match.group(2)) if match.group(2) else datetime.utcnow().year
             return safe_datetime(year, month_number, day)
     return None
+
+
+def has_exact_date_in_url(url: str) -> bool:
+    patterns = [
+        r"/20\d{2}/[01]?\d/[0-3]?\d(?:/|[-_])",
+        r"[-_/]20\d{2}[-_/][01]?\d[-_/][0-3]?\d(?:[-_/]|$)",
+    ]
+    return any(re.search(pattern, url) for pattern in patterns)
 
 
 def parse_relative_date(value: str) -> datetime | None:

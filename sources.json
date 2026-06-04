@@ -5,7 +5,7 @@
       "name": "Al Wasat",
       "language": "ar",
       "country_focus": "Libya",
-      "url": "https://alwasat.ly/news/libya",
+      "url": "https://alwasat.ly/section/libya",
       "parser": "al_wasat",
       "enabled": true,
       "require_keyword_match": false,
@@ -18,7 +18,8 @@
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
       },
       "fallback_urls": [
-        "https://alwasat.ly/news",
+        "https://alwasat.ly/section/libya",
+        "https://alwasat.ly/section/all",
         "https://alwasat.ly/"
       ]
     },

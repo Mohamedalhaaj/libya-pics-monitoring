@@ -12,7 +12,7 @@ from urllib.parse import unquote, urlparse
 from parsers import get_parser
 from parsers.common import clean_text, extract_article_page_details, is_noise_link, is_probable_article_url, normalize_url, page_metadata_flags, soup_from_html
 from utils.config import load_sources
-from utils.dates import in_date_range, parse_cli_date, parse_date_from_url
+from utils.dates import has_exact_date_in_url, in_date_range, parse_cli_date, parse_date_from_url
 from utils.exports import (
     ensure_output_dir,
     write_articles_csv,
@@ -318,6 +318,15 @@ async def scrape_source(
 
     for article in parsed_candidates:
         enrich_article(article, start_date)
+        if not looks_like_article_url(article.url):
+            article.notes = append_note(article.notes, "non_article_url")
+            article.relevance_status = "rejected"
+            article.relevance_reason = "non_article_url"
+            article.qa_status = "rejected"
+            article.qa_notes = "Rejected because URL is a listing, search, tag, category, or other non-article page"
+            rejected_relevance_count += 1
+            raw_candidates.append(article)
+            continue
         relevance_ok, relevance_reason = check_libya_relevance(article, source)
         article.relevance_reason = relevance_reason
         article.relevance_status = "accepted" if relevance_ok else "rejected"
@@ -338,10 +347,16 @@ async def scrape_source(
             article.qa_status = "approved"
             article.qa_notes = "Reliable date inside target window and Libya-relevant"
             accepted.append(article)
-        elif date_status in {"missing_date", "ambiguous_date"}:
-            article.notes = date_status
+        elif date_status in {"missing_date", "ambiguous_date", "date_conflict"}:
+            article.notes = append_note(article.notes, date_status)
             article.qa_status = "needs_review"
-            article.qa_notes = "Date missing or uncertain; not approved automatically"
+            if date_status == "date_conflict":
+                article.qa_notes = append_note(
+                    article.qa_notes,
+                    "URL date conflicts with article metadata; needs editorial verification",
+                )
+            else:
+                article.qa_notes = append_note(article.qa_notes, "Date missing or uncertain; not approved automatically")
             review_queue.append(article)
         else:
             article.notes = "outside_date_window"
@@ -446,6 +461,7 @@ async def run(args: argparse.Namespace) -> None:
     raw_candidates = deduplicate_articles(raw_candidates)
     approved_articles = deduplicate_articles(approved_articles)
     review_queue_articles = deduplicate_articles(review_queue_articles)
+    approved_articles, duplicate_articles = deduplicate_cross_source_stories(approved_articles)
     approved_articles.sort(key=lambda article: article.published_at or datetime.min, reverse=True)
 
     raw_csv = output_dir / "raw_candidates.csv"
@@ -470,12 +486,18 @@ async def run(args: argparse.Namespace) -> None:
     logger.info("Wrote verification table to %s", verification_csv)
     logger.info("Wrote %s date-uncertain candidates to %s", len(review_queue_articles), uncertain_csv)
     logger.info("Wrote source debug report to %s", debug_csv)
-    print_terminal_summary(verifications)
+    logger.info("Removed %s cross-source duplicate approved articles", len(duplicate_articles))
+    print_terminal_summary(verifications, approved_articles, review_queue_articles, len(duplicate_articles))
 
 
 def enrich_article(article: Article, start_date: datetime | None) -> None:
+    url_date = parse_date_from_url(article.url)
+    if article.published_at and url_date and has_exact_date_in_url(article.url):
+        if article.published_at.date() != url_date.date():
+            article.date_status = "date_conflict"
+            article.notes = append_note(article.notes, f"url_date_conflict:{url_date.date().isoformat()}")
+            article.qa_notes = append_note(article.qa_notes, "URL date differs from article metadata date")
     if article.published_at is None:
-        url_date = parse_date_from_url(article.url)
         if url_date:
             if is_month_only_url(article.url):
                 article.date_status = "ambiguous_date"
@@ -484,13 +506,15 @@ def enrich_article(article: Article, start_date: datetime | None) -> None:
             else:
                 article.published_at = url_date
                 article.date_source = "url"
-    if article.published_at:
+    if article.published_at and article.date_status != "date_conflict":
         article.date_status = "parsed"
     article.section_guess = guess_section(article)
     article.subsection_guess = guess_subsection(article)
 
 
 def classify_date(article: Article, start_date: datetime | None, end_date: datetime | None) -> str:
+    if article.date_status == "date_conflict":
+        return "date_conflict"
     if article.date_source == "url_month_only":
         return "ambiguous_date"
     if article.published_at is None:
@@ -520,10 +544,29 @@ def check_libya_relevance(article: Article, source: dict) -> tuple[bool, str]:
 
 def looks_like_article_url(url: str) -> bool:
     lowered = url.casefold()
-    blocked = ("/category/", "/tag/", "/tags/", "/section/", "/author/", ".pdf")
+    if re.search(r"/(?:article|news|details|story)\.php\?", lowered) and re.search(r"[?&](?:id|news_id|nid)=", lowered):
+        return True
+    blocked = (
+        "/category/",
+        "/tag/",
+        "/tags/",
+        "/section/",
+        "/author/",
+        "/search",
+        "search?",
+        "site-search",
+        "?s=",
+        "&s=",
+        ".pdf",
+    )
     if any(marker in lowered for marker in blocked):
         return False
-    return bool(re.search(r"/(?:20\d{2}/)?[^/?#]{12,}", lowered))
+    path = urlparse(url).path.strip("/")
+    if not path:
+        return False
+    if path.casefold() in {"news", "latest", "libya", "world", "international", "africa"}:
+        return False
+    return True
 
 
 def is_month_only_url(url: str) -> bool:
@@ -534,6 +577,14 @@ def is_month_only_url(url: str) -> bool:
 
 def same_month(left: datetime, right: datetime) -> bool:
     return left.year == right.year and left.month == right.month
+
+
+def append_note(existing: str, note: str) -> str:
+    if not existing:
+        return note
+    if note in existing:
+        return existing
+    return f"{existing}; {note}"
 
 
 def guess_subsection(article: Article) -> str:
@@ -590,6 +641,125 @@ def deduplicate_articles(articles: list[Article]) -> list[Article]:
     return unique
 
 
+def deduplicate_cross_source_stories(articles: list[Article]) -> tuple[list[Article], list[Article]]:
+    seen: dict[tuple[str, str], Article] = {}
+    seen_by_date: dict[str, list[tuple[set[str], Article]]] = {}
+    unique: list[Article] = []
+    duplicates: list[Article] = []
+
+    for article in articles:
+        key = story_duplicate_key(article)
+        if key is None:
+            unique.append(article)
+            continue
+        primary = seen.get(key)
+        token_key = normalized_story_tokens(article.title)
+        fuzzy_primary = find_similar_story(article, token_key, seen_by_date)
+        if primary is None and fuzzy_primary is None:
+            seen[key] = article
+            seen_by_date.setdefault(article.published_at.date().isoformat(), []).append((token_key, article))
+            unique.append(article)
+            continue
+        primary = primary or fuzzy_primary
+        article.duplicate_status = "duplicate_cross_source"
+        article.include_candidate = False
+        article.qa_status = "duplicate"
+        article.qa_notes = append_note(
+            article.qa_notes,
+            f"Duplicate story removed from approved output; primary source: {primary.source_name}",
+        )
+        article.notes = append_note(article.notes, f"duplicate_of:{primary.source_name}")
+        duplicates.append(article)
+
+    return unique, duplicates
+
+
+def find_similar_story(
+    article: Article,
+    token_key: set[str],
+    seen_by_date: dict[str, list[tuple[set[str], Article]]],
+) -> Article | None:
+    if not article.published_at or len(token_key) < 4:
+        return None
+    date_key = article.published_at.date().isoformat()
+    for existing_tokens, existing_article in seen_by_date.get(date_key, []):
+        if existing_article.source_name == article.source_name:
+            continue
+        union_size = len(token_key | existing_tokens)
+        if union_size == 0:
+            continue
+        similarity = len(token_key & existing_tokens) / union_size
+        if similarity >= 0.48:
+            return existing_article
+    return None
+
+
+def story_duplicate_key(article: Article) -> tuple[str, str] | None:
+    if not article.published_at:
+        return None
+    title_key = normalize_story_title(article.title)
+    if len(title_key) < 18:
+        return None
+    return article.published_at.date().isoformat(), title_key
+
+
+def normalize_story_title(title: str) -> str:
+    return " ".join(sorted(normalized_story_tokens(title)))
+
+
+def normalized_story_tokens(title: str) -> set[str]:
+    text = title.casefold()
+    text = re.sub(r"[\u064b-\u065f\u0670\u0640]", "", text)
+    replacements = str.maketrans(
+        {
+            "أ": "ا",
+            "إ": "ا",
+            "آ": "ا",
+            "ٱ": "ا",
+            "ى": "ي",
+            "ؤ": "و",
+            "ئ": "ي",
+            "ة": "ه",
+        }
+    )
+    text = text.translate(replacements)
+    text = re.sub(r"https?://\S+", " ", text)
+    text = re.sub(r"[^\w\u0600-\u06ff]+", " ", text)
+    return {token for token in text.split() if token not in STORY_STOPWORDS and len(token) > 1}
+
+
+STORY_STOPWORDS = {
+    "في",
+    "من",
+    "عن",
+    "على",
+    "الى",
+    "إلى",
+    "مع",
+    "بعد",
+    "قبل",
+    "هذا",
+    "هذه",
+    "ذلك",
+    "تلك",
+    "التي",
+    "الذي",
+    "انه",
+    "انها",
+    "and",
+    "the",
+    "for",
+    "from",
+    "with",
+    "after",
+    "before",
+    "this",
+    "that",
+    "says",
+    "over",
+}
+
+
 def dedupe_values(values: list[str]) -> list[str]:
     seen: set[str] = set()
     unique: list[str] = []
@@ -630,10 +800,16 @@ def determine_zero_reason(
     return "unknown"
 
 
-def print_terminal_summary(verifications: list[SourceVerification]) -> None:
+def print_terminal_summary(
+    verifications: list[SourceVerification],
+    approved_articles: list[Article],
+    review_queue_articles: list[Article],
+    duplicates_removed: int,
+) -> None:
     failed = [verification for verification in verifications if verification.fetch_status == "failed_fetch"]
     succeeded = [verification for verification in verifications if verification.fetch_status != "failed_fetch"]
-    top_sources = Counter({verification.source_name: verification.accepted_count for verification in verifications})
+    approved_by_source = Counter(article.source_name for article in approved_articles)
+    review_by_source = Counter(article.source_name for article in review_queue_articles)
 
     print("\nScraper summary")
     print(f"- total sources checked: {len(verifications)}")
@@ -641,14 +817,23 @@ def print_terminal_summary(verifications: list[SourceVerification]) -> None:
     print(f"- sources failed: {len(failed)}")
     print(f"- total candidate links found: {sum(v.candidate_links_found for v in verifications)}")
     print(f"- total article pages opened: {sum(v.article_pages_opened for v in verifications)}")
-    print(f"- total accepted items: {sum(v.accepted_count for v in verifications)}")
-    print(f"- total review queue items: {sum(v.uncertain_date_count for v in verifications)}")
+    print(f"- approved items after dedupe: {len(approved_articles)}")
+    print(f"- review queue items: {len(review_queue_articles)}")
+    print(f"- duplicates removed from approved output: {duplicates_removed}")
     print(f"- total rejected outside date window: {sum(v.rejected_date_count for v in verifications)}")
     print(f"- total rejected non-Libya items: {sum(v.rejected_relevance_count for v in verifications)}")
 
-    print("\nTop sources by accepted item count:")
-    for source_name, count in top_sources.most_common(10):
-        print(f"- {source_name}: {count}")
+    print("\nSource contribution table:")
+    print("source,approved,review")
+    contribution_sources = sorted(
+        set(approved_by_source) | set(review_by_source),
+        key=lambda source_name: (-approved_by_source[source_name], -review_by_source[source_name], source_name),
+    )
+    if contribution_sources:
+        for source_name in contribution_sources:
+            print(f"{source_name},{approved_by_source[source_name]},{review_by_source[source_name]}")
+    else:
+        print("None,0,0")
 
     print("\nFailed sources list:")
     if failed:

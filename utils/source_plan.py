@@ -22,7 +22,11 @@ PRIORITY_SOURCE_IDS = [
 
 SOURCE_URLS: dict[str, dict[str, list[str]]] = {
     "al_wasat": {
-        "collection_urls": ["https://alwasat.ly/news/libya", "https://alwasat.ly/news"],
+        "collection_urls": [
+            "https://alwasat.ly/section/libya",
+            "https://alwasat.ly/section/all",
+            "https://alwasat.ly/",
+        ],
         "search_url_templates": ["https://alwasat.ly/search?search={query}"],
     },
     "ean_libya": {

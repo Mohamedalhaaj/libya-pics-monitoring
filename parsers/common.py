@@ -127,7 +127,11 @@ def extract_date(item: Tag, selectors: dict[str, str]) -> tuple[object, str, str
 def find_date_like_text(text: str) -> list[str]:
     patterns = [
         r"\d{4}-\d{1,2}-\d{1,2}(?:T\d{1,2}:\d{2}:\d{2}Z?)?",
+        r"\d{4}/\d{1,2}/\d{1,2}",
+        r"\d{1,2}[/-]\d{1,2}[/-]20\d{2}",
+        r"(?:السبت|الأحد|الاحد|الإثنين|الاثنين|الثلاثاء|الأربعاء|الاربعاء|الخميس|الجمعة)\s+\d{1,2}\s+(?:يناير|فبراير|مارس|أبريل|ابريل|مايو|يونيو|يوليو|أغسطس|اغسطس|سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)\s+\d{4}",
         r"\d{1,2}\s+(?:يناير|فبراير|مارس|أبريل|ابريل|مايو|يونيو|يوليو|أغسطس|اغسطس|سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)\s+\d{4}",
+        r"(?:تاريخ النشر|نشر في|آخر تحديث|آخر تحديث:)\s*[:：]?\s*[^|،\n]{0,60}\d{1,2}\s+(?:يناير|فبراير|مارس|أبريل|ابريل|مايو|يونيو|يوليو|أغسطس|اغسطس|سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)\s+\d{4}",
         r"(?:منذ|قبل)\s+\d+\s+(?:دقيقة|دقائق|ساعة|ساعات|يوم|أيام)",
         r"\d+\s+(?:minute|minutes|hour|hours|day|days)\s+ago",
     ]
@@ -211,7 +215,21 @@ def extract_article_page_details(html: str, article: Article) -> Article:
         ".date",
         ".entry-date",
         ".post-date",
+        ".article-date",
+        ".news-date",
+        ".date-display-single",
+        ".published",
+        ".timestamp",
+        ".created",
+        ".created-at",
+        ".article-info",
+        ".post-info",
+        ".meta",
+        ".metadata",
         "span[class*='date']",
+        "div[class*='date']",
+        "span[class*='time']",
+        "div[class*='time']",
     ]:
         for node in soup.select(selector):
             raw_dates.extend(
@@ -221,7 +239,7 @@ def extract_article_page_details(html: str, article: Article) -> Article:
                     node.get_text(" ", strip=True),
                 ]
             )
-    raw_dates.extend(find_date_like_text(soup.get_text(" ", strip=True)[:3000]))
+    raw_dates.extend(find_date_like_text(soup.get_text(" ", strip=True)[:15000]))
     for raw_date in raw_dates:
         raw_date = clean_text(raw_date)
         parsed = parse_article_date(raw_date)
