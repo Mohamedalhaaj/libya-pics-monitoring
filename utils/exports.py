@@ -63,5 +63,9 @@ def write_verification_csv(verifications: list[SourceVerification], path: str | 
             writer.writerow(verification.to_row())
 
 
+def write_debug_report_csv(verifications: list[SourceVerification], path: str | Path) -> None:
+    write_verification_csv(verifications, path)
+
+
 def write_date_uncertain_csv(articles: list[Article], path: str | Path) -> None:
     write_articles_csv(articles, path)

@@ -10,9 +10,16 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from parsers import get_parser
+from parsers.common import extract_article_page_details
 from utils.config import load_sources
 from utils.dates import in_date_range, parse_cli_date, parse_date_from_url
-from utils.exports import ensure_output_dir, write_articles_csv, write_date_uncertain_csv, write_verification_csv
+from utils.exports import (
+    ensure_output_dir,
+    write_articles_csv,
+    write_date_uncertain_csv,
+    write_debug_report_csv,
+    write_verification_csv,
+)
 from utils.fetcher import BrowserFetcher
 from utils.logger import setup_logging
 from utils.models import Article, SourceVerification
@@ -32,6 +39,17 @@ DEFAULT_KEYWORDS = [
     "Zawiya",
     "Brega",
     "UNSMIL",
+    "United Nations",
+    "migration",
+    "migrant",
+    "security",
+    "governance",
+    "municipality",
+    "municipal",
+    "public services",
+    "reconstruction",
+    "health",
+    "human rights",
     "ليبيا",
     "الليبي",
     "الليبية",
@@ -44,6 +62,19 @@ DEFAULT_KEYWORDS = [
     "الزاوية",
     "البريقة",
     "البعثة الأممية",
+    "الأمم المتحدة",
+    "هجرة",
+    "مهاجر",
+    "أمن",
+    "حوكمة",
+    "بلدية",
+    "البلديات",
+    "خدمات",
+    "إعمار",
+    "إعادة الإعمار",
+    "صحة",
+    "مستشفى",
+    "حقوق الإنسان",
 ]
 
 LIBYA_KEYWORDS = [
@@ -55,9 +86,28 @@ LIBYA_KEYWORDS = [
     "derna",
     "zawiya",
     "unsmil",
+    "united nations",
+    "srsg",
     "brega",
     "sebha",
     "zuwara",
+    "election",
+    "government",
+    "parliament",
+    "security",
+    "migration",
+    "migrant",
+    "economy",
+    "central bank",
+    "oil",
+    "governance",
+    "municipality",
+    "municipal",
+    "public services",
+    "reconstruction",
+    "health",
+    "hospital",
+    "human rights",
     "ليبيا",
     "ليبي",
     "الليبي",
@@ -72,6 +122,91 @@ LIBYA_KEYWORDS = [
     "البريقة",
     "الخليج العربي للنفط",
     "البعثة الأممية",
+    "الأمم المتحدة",
+    "المبعوث",
+    "انتخابات",
+    "حكومة",
+    "مجلس",
+    "أمن",
+    "هجرة",
+    "مهاجر",
+    "اقتصاد",
+    "مصرف",
+    "نفط",
+    "حوكمة",
+    "بلدية",
+    "البلديات",
+    "خدمات",
+    "إعمار",
+    "إعادة الإعمار",
+    "صحة",
+    "مستشفى",
+    "حقوق الإنسان",
+]
+
+LIBYA_SOURCE_IDS = {
+    "al_wasat",
+    "ean_libya",
+    "rna_reportage",
+    "libya_observer",
+    "libya_review",
+    "libya_herald",
+    "al_menassa",
+    "al_shahed",
+    "al_marsad",
+    "libya_24",
+    "al_saaa_24",
+    "address_libya",
+    "lana",
+    "fawasel_media",
+    "tanasuh",
+    "libya_al_ahrar",
+    "libya_update",
+    "akhbar_libya_24",
+    "al_sabaah",
+}
+
+PUBLIC_AFFAIRS_KEYWORDS = [
+    "unsmil",
+    "united nations",
+    "politic",
+    "government",
+    "parliament",
+    "election",
+    "security",
+    "migration",
+    "migrant",
+    "economy",
+    "central bank",
+    "oil",
+    "governance",
+    "municipal",
+    "municipality",
+    "public service",
+    "reconstruction",
+    "health",
+    "hospital",
+    "human rights",
+    "الأمم المتحدة",
+    "البعثة الأممية",
+    "سياس",
+    "حكومة",
+    "مجلس",
+    "انتخاب",
+    "أمن",
+    "هجرة",
+    "مهاجر",
+    "اقتصاد",
+    "مصرف",
+    "نفط",
+    "حوكمة",
+    "بلدية",
+    "البلديات",
+    "خدمات",
+    "إعمار",
+    "صحة",
+    "مستشفى",
+    "حقوق الإنسان",
 ]
 
 async def scrape_source(
@@ -81,6 +216,7 @@ async def scrape_source(
     start_date: datetime | None,
     end_date: datetime | None,
     max_pages: int,
+    max_article_pages: int,
 ) -> tuple[list[Article], list[Article], SourceVerification]:
     collection_urls = build_collection_urls(source, keywords, start_date)[:max_pages]
     collection_urls.extend(source.get("fallback_urls", []))
@@ -110,6 +246,30 @@ async def scrape_source(
             logger.warning("Fetch failed for source=%s %s", source["id"], message)
 
     parsed_candidates = deduplicate_articles(parsed_candidates)
+    candidate_count = len(parsed_candidates)
+    article_pages_opened = 0
+    article_fetch_errors: list[str] = []
+    enriched_candidates: list[Article] = []
+    for article in parsed_candidates[:max_article_pages]:
+        try:
+            result = await fetcher.fetch(article.url)
+            article_pages_opened += 1
+            enriched_candidates.append(extract_article_page_details(result.html, article))
+        except Exception as exc:
+            article_fetch_errors.append(f"{article.url}: {exc}")
+            logger.warning("Article fetch failed for source=%s url=%s error=%s", source["id"], article.url, exc)
+            enriched_candidates.append(article)
+
+    if len(parsed_candidates) > max_article_pages:
+        logger.info(
+            "Article page cap reached source=%s candidates=%s opened=%s",
+            source["id"],
+            len(parsed_candidates),
+            max_article_pages,
+        )
+        enriched_candidates.extend(parsed_candidates[max_article_pages:])
+
+    parsed_candidates = deduplicate_articles(enriched_candidates)
     accepted: list[Article] = []
     uncertain: list[Article] = []
     rejected_date_count = 0
@@ -143,33 +303,36 @@ async def scrape_source(
         source_name=source["name"],
         source_url=" | ".join(fetched_urls[:3]) or source["url"],
         fetch_status="failed_fetch" if not fetched_urls and errors else "ok",
-        candidate_links_found=len(parsed_candidates),
-        article_pages_opened=0,
+        candidate_links_found=candidate_count,
+        article_pages_opened=article_pages_opened,
         date_parsed_count=date_parsed_count,
         accepted_count=len(accepted),
         rejected_date_count=rejected_date_count,
         rejected_relevance_count=rejected_relevance_count,
         uncertain_date_count=len(uncertain),
-        failed_count=len(errors),
+        failed_count=len(errors) + len(article_fetch_errors),
         zero_result_reason=determine_zero_reason(
             fetched_pages=len(fetched_urls),
-            candidate_count=len(parsed_candidates),
+            candidate_count=candidate_count,
+            article_pages_opened=article_pages_opened,
             date_parsed_count=date_parsed_count,
             accepted_count=len(accepted),
             rejected_date_count=rejected_date_count,
             rejected_relevance_count=rejected_relevance_count,
             uncertain_date_count=len(uncertain),
-            errors=errors,
+            errors=[*errors, *article_fetch_errors],
         ),
-        error=" | ".join(errors[:3]),
+        error=" | ".join([*errors, *article_fetch_errors][:3]),
     )
 
     if verification.zero_result_reason:
         logger.info(
-            "Zero-result diagnostic source=%s reason=%s candidates=%s accepted=%s rejected_date=%s rejected_relevance=%s uncertain=%s errors=%s",
+            "Zero-result diagnostic source=%s reason=%s candidates=%s opened=%s dates=%s accepted=%s rejected_date=%s rejected_relevance=%s uncertain=%s errors=%s",
             source["id"],
             verification.zero_result_reason,
-            len(parsed_candidates),
+            candidate_count,
+            article_pages_opened,
+            date_parsed_count,
             len(accepted),
             rejected_date_count,
             rejected_relevance_count,
@@ -210,6 +373,7 @@ async def run(args: argparse.Namespace) -> None:
                 start_date=start_date,
                 end_date=end_date,
                 max_pages=args.max_pages_per_source,
+                max_article_pages=args.max_article_pages_per_source,
             )
             all_articles.extend(articles)
             date_uncertain_articles.extend(uncertain_articles)
@@ -222,14 +386,17 @@ async def run(args: argparse.Namespace) -> None:
     articles_csv = output_dir / "libya_media_headlines.csv"
     verification_csv = output_dir / "source_verification_table.csv"
     uncertain_csv = output_dir / "date_uncertain_items.csv"
+    debug_csv = output_dir / "source_debug_report.csv"
 
     write_articles_csv(all_articles, articles_csv)
     write_verification_csv(verifications, verification_csv)
     write_date_uncertain_csv(date_uncertain_articles, uncertain_csv)
+    write_debug_report_csv(verifications, debug_csv)
 
     logger.info("Wrote %s accepted articles to %s", len(all_articles), articles_csv)
     logger.info("Wrote verification table to %s", verification_csv)
     logger.info("Wrote %s date-uncertain candidates to %s", len(date_uncertain_articles), uncertain_csv)
+    logger.info("Wrote source debug report to %s", debug_csv)
     print_terminal_summary(verifications)
 
 
@@ -262,6 +429,11 @@ def check_libya_relevance(article: Article, source: dict) -> tuple[bool, str]:
     matched = [keyword for keyword in LIBYA_KEYWORDS if keyword.casefold() in text]
     if matched:
         return True, f"keyword_match:{matched[0]}"
+    topical_match = next((keyword for keyword in PUBLIC_AFFAIRS_KEYWORDS if keyword.casefold() in text), "")
+    if source["id"] in LIBYA_SOURCE_IDS and topical_match:
+        return True, f"libya_source_topic:{topical_match}"
+    if source["id"] in LIBYA_SOURCE_IDS and not source.get("require_keyword_match"):
+        return True, "libya_source"
     return False, "not_libya_related"
 
 
@@ -287,10 +459,15 @@ def guess_section(article: Article) -> str:
     text = f"{article.section} {article.title} {article.summary}".casefold()
     sections = [
         ("United Nations", ["unsmil", "united nations", "srsg", "dsrsg", "الأمم المتحدة", "البعثة الأممية"]),
-        ("Politics", ["election", "government", "parliament", "dialogue", "roadmap", "حكومة", "انتخابات", "مجلس", "خارطة"]),
+        ("Governance", ["government", "ministry", "minister", "cabinet", "governance", "حكومة", "وزارة", "وزير", "حوكمة"]),
+        ("Politics", ["election", "parliament", "dialogue", "roadmap", "مجلس", "انتخابات", "حوار", "خارطة"]),
         ("Military & Security", ["security", "armed", "clashes", "army", "crime", "أمني", "اشتباك", "مسلح", "جريمة"]),
-        ("Human Rights & Rule of Law", ["human rights", "court", "justice", "prison", "migrant", "refugee", "حقوق", "محكمة", "عدل", "سجن", "مهاجر", "لاجئ"]),
+        ("Migration", ["migration", "migrant", "refugee", "هجرة", "مهاجر", "لاجئ"]),
+        ("Human Rights", ["human rights", "court", "justice", "prison", "حقوق", "محكمة", "عدل", "سجن"]),
         ("Economy", ["central bank", "economy", "oil", "fuel", "bank", "مصرف", "اقتصاد", "نفط", "وقود"]),
+        ("Municipalities & Public Services", ["municipality", "municipal", "public services", "electricity", "water", "education", "بلدية", "البلديات", "خدمات", "كهرباء", "مياه", "تعليم"]),
+        ("Reconstruction", ["reconstruction", "rebuild", "infrastructure", "إعمار", "إعادة الإعمار", "بنية تحتية"]),
+        ("Health", ["health", "hospital", "medical", "صحة", "مستشفى", "طبي"]),
         ("Environment", ["weather", "flood", "earthquake", "climate", "طقس", "فيضانات", "زلزال", "مناخ"]),
         ("Regional & International", ["italy", "tunisia", "turkey", "egypt", "chad", "إيطاليا", "تونس", "تركيا", "مصر", "تشاد"]),
         ("Varieties", ["sport", "football", "culture", "heritage", "رياضة", "كرة", "ثقافة", "تراث"]),
@@ -326,6 +503,7 @@ def dedupe_values(values: list[str]) -> list[str]:
 def determine_zero_reason(
     fetched_pages: int,
     candidate_count: int,
+    article_pages_opened: int,
     date_parsed_count: int,
     accepted_count: int,
     rejected_date_count: int,
@@ -336,16 +514,12 @@ def determine_zero_reason(
     if accepted_count:
         return ""
     if fetched_pages == 0 and errors:
-        return "fetch_failed"
+        return "selector_failed"
     if candidate_count == 0:
-        return "no_links_found"
-    if date_parsed_count == 0 and uncertain_date_count:
-        return "date_parsing_failed"
-    if rejected_date_count and rejected_date_count >= candidate_count - rejected_relevance_count:
-        return "all_items_outside_date_window"
-    if rejected_relevance_count and rejected_relevance_count >= candidate_count - uncertain_date_count:
-        return "all_items_failed_relevance_filter"
-    return "unknown"
+        return "no_article_links_found"
+    if article_pages_opened and date_parsed_count == 0 and uncertain_date_count:
+        return "date_parse_failed"
+    return "all_filtered_out"
 
 
 def print_terminal_summary(verifications: list[SourceVerification]) -> None:
@@ -375,6 +549,19 @@ def print_terminal_summary(verifications: list[SourceVerification]) -> None:
     else:
         print("- None")
 
+    print("\nSources with zero accepted articles:")
+    zero_sources = [verification for verification in verifications if verification.accepted_count == 0]
+    if zero_sources:
+        for verification in zero_sources:
+            print(
+                f"- {verification.source_name}: {verification.zero_result_reason} "
+                f"(links={verification.candidate_links_found}, opened={verification.article_pages_opened}, "
+                f"dates={verification.date_parsed_count}, rejected_date={verification.rejected_date_count}, "
+                f"rejected_relevance={verification.rejected_relevance_count}, uncertain={verification.uncertain_date_count})"
+            )
+    else:
+        print("- None")
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Collect Libya-related headlines for UNSMIL/PICS media monitoring.")
@@ -388,6 +575,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--retries", type=int, default=3, help="Fetch retry attempts per source.")
     parser.add_argument("--retry-delay", type=float, default=2.0, help="Base retry delay in seconds.")
     parser.add_argument("--max-pages-per-source", type=int, default=8, help="Maximum primary/search/archive URLs to fetch per source.")
+    parser.add_argument("--max-article-pages-per-source", type=int, default=80, help="Maximum candidate article pages to open per source.")
     parser.add_argument("--show-browser", action="store_true", help="Run Playwright with a visible browser.")
     parser.add_argument("--log-file", default="logs/scraper.log", help="Path to scraper log file.")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")

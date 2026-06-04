@@ -156,7 +156,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://libya24.tv/",
-      "parser": "generic_list",
+      "parser": "libya_24",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -174,7 +174,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://alsaaa24.net/",
-      "parser": "generic_list",
+      "parser": "al_saaa_24",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {
@@ -236,7 +236,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://aawsat.com/tags/%D9%84%D9%8A%D8%A8%D9%8A%D8%A7",
-      "parser": "generic_list",
+      "parser": "asharq_al_awsat",
       "enabled": true,
       "require_keyword_match": true,
       "selectors": {
@@ -312,7 +312,7 @@
       "language": "ar",
       "country_focus": "Libya",
       "url": "https://almenassa.ly/wide-web-1/",
-      "parser": "generic_list",
+      "parser": "al_menassa",
       "enabled": true,
       "require_keyword_match": false,
       "selectors": {

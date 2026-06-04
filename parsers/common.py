@@ -83,6 +83,21 @@ def is_noise_link(title: str, url: str) -> bool:
     return any(part in lowered_url for part in NOISE_URL_PARTS)
 
 
+def is_probable_article_url(url: str, include_patterns: tuple[str, ...] = ()) -> bool:
+    parsed = urlparse(url)
+    path = parsed.path.casefold()
+    if any(part in url.casefold() for part in NOISE_URL_PARTS):
+        return False
+    if include_patterns and any(pattern in path for pattern in include_patterns):
+        return True
+    if re.search(r"/20\d{2}/", path):
+        return True
+    path_parts = [part for part in path.split("/") if part]
+    if len(path_parts) >= 1 and len(path_parts[-1]) >= 14:
+        return True
+    return False
+
+
 def extract_date(item: Tag, selectors: dict[str, str]) -> tuple[object, str, str]:
     candidates: list[str] = []
     if selectors.get("date"):
@@ -150,6 +165,82 @@ def build_article(
         parser_used=parser_used,
         matched_keywords=matched_keywords or [],
     )
+
+
+def extract_article_page_details(html: str, article: Article) -> Article:
+    soup = soup_from_html(html)
+    title = first_text(
+        soup,
+        [
+            "meta[property='og:title']",
+            "meta[name='twitter:title']",
+            "h1",
+            ".entry-title",
+            ".post-title",
+            "title",
+        ],
+    )
+    if title and len(title) > len(article.title):
+        article.title = title
+
+    summary = first_text(
+        soup,
+        [
+            "meta[property='og:description']",
+            "meta[name='description']",
+            "meta[name='twitter:description']",
+            ".entry-summary",
+            ".post-excerpt",
+            "article p",
+            ".article-content p",
+            ".content p",
+        ],
+    )
+    if summary:
+        article.summary = summary
+
+    raw_dates = []
+    for selector in [
+        "meta[property='article:published_time']",
+        "meta[name='article:published_time']",
+        "meta[name='date']",
+        "meta[itemprop='datePublished']",
+        "time",
+        ".date",
+        ".entry-date",
+        ".post-date",
+        "span[class*='date']",
+    ]:
+        for node in soup.select(selector):
+            raw_dates.extend(
+                [
+                    node.get("datetime") or "",
+                    node.get("content") or "",
+                    node.get_text(" ", strip=True),
+                ]
+            )
+    raw_dates.extend(find_date_like_text(soup.get_text(" ", strip=True)[:3000]))
+    for raw_date in raw_dates:
+        raw_date = clean_text(raw_date)
+        parsed = parse_article_date(raw_date)
+        if parsed:
+            article.published_at = parsed
+            article.raw_date = raw_date
+            article.date_source = "article_page"
+            break
+    return article
+
+
+def first_text(soup: BeautifulSoup, selectors: list[str]) -> str:
+    for selector in selectors:
+        node = soup.select_one(selector)
+        if not node:
+            continue
+        value = node.get("content") if node.name == "meta" else node.get_text(" ", strip=True)
+        value = clean_text(value or "")
+        if value:
+            return value
+    return ""
 
 
 def match_keywords(text: str, keywords: list[str]) -> list[str]:

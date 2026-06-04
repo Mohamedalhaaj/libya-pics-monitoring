@@ -42,8 +42,14 @@ SOURCE_URLS: dict[str, dict[str, list[str]]] = {
         "search_url_templates": ["https://libyareview.com/?s={query}"],
     },
     "lana": {
-        "collection_urls": ["https://lana.gov.ly/", "https://lana.gov.ly/category/libya/"],
-        "search_url_templates": ["https://lana.gov.ly/?s={query}"],
+        "collection_urls": [
+            "https://lana.gov.ly/category.php?lang=ar&id=8",
+            "https://lana.gov.ly/",
+        ],
+        "search_url_templates": [
+            "https://lana.gov.ly/search.php?lang=ar&q={query}",
+            "https://lana.gov.ly/?s={query}",
+        ],
     },
     "al_marsad": {
         "collection_urls": ["https://almarsad.co/category/libya/", "https://almarsad.co/"],
@@ -170,7 +176,7 @@ def build_collection_urls(source: dict[str, Any], keywords: list[str], start_dat
     search_keywords = source.get("search_keywords") or default_search_keywords(source, keywords)
     date_tokens = date_search_tokens(start_date)
     for template in [*source.get("search_url_templates", []), *configured.get("search_url_templates", [])]:
-        for keyword in [*search_keywords, *date_tokens]:
+        for keyword in [*date_tokens, *search_keywords]:
             urls.append(template.format(query=quote_plus(keyword), raw_query=keyword))
 
     return dedupe(urls)

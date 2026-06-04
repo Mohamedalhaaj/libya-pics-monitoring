@@ -11,8 +11,9 @@ Python media monitoring system for collecting Libya-related headlines from appro
 - Date filtering with optional handling for undated source items
 - CSV output for collected headlines
 - CSV verification table for source checks
-- Word report generation utilities for later editorial workflows
+- Source-by-source debug report for extraction and zero-result diagnosis
 - Search/archive fallback collection using source-specific URL plans
+- Article-page fallback extraction when listing pages do not expose dates or summaries
 - Date-uncertain candidate export for editorial review
 - Logging and retry handling
 
@@ -27,14 +28,17 @@ Python media monitoring system for collecting Libya-related headlines from appro
 ├── parsers/
 │   ├── __init__.py
 │   ├── base.py
-│   └── generic.py
+│   ├── common.py
+│   ├── generic.py
+│   └── source_specific.py
 └── utils/
     ├── config.py
     ├── dates.py
     ├── exports.py
     ├── fetcher.py
     ├── logger.py
-    └── models.py
+    ├── models.py
+    └── source_plan.py
 ```
 
 ## Installation
@@ -79,10 +83,11 @@ Outputs are written to `output/`:
 - `libya_media_headlines.csv`
 - `source_verification_table.csv`
 - `date_uncertain_items.csv`
+- `source_debug_report.csv`
 
 Logs are written to `logs/scraper.log`.
 
-The scraper also prints a terminal summary showing articles collected per source, failed sources, zero-article sources, and the reason each source returned no dated articles.
+The scraper also prints a terminal summary showing articles collected per source, failed sources, zero-article sources, and the reason each source returned no accepted articles. Zero-source reasons use the operational labels `selector_failed`, `no_article_links_found`, `date_parse_failed`, and `all_filtered_out`.
 
 ## Source Configuration
 
@@ -92,7 +97,7 @@ Sources are managed in `sources.json`. Each enabled source defines:
 - `name`: report-friendly source name
 - `language`: `ar` or `en`
 - `url`: collection URL
-- `parser`: parser implementation, currently `generic_list`
+- `parser`: parser implementation, for example `generic_list`, `al_wasat`, `ean_libya`, or `libya_review`
 - `selectors`: CSS selectors for article cards, titles, URLs, summaries, dates, and sections
 - `require_keyword_match`: whether to filter items by Libya/PICS keywords
 
