@@ -203,6 +203,14 @@ def extract_article_page_details(html: str, article: Article) -> Article:
     )
     if summary:
         article.summary = summary
+    body_nodes = soup.select(
+        "article p, .article-content p, .entry-content p, .post-content p, .content p, .field-name-body p"
+    )
+    body_text = clean_text(" ".join(node.get_text(" ", strip=True) for node in body_nodes))
+    if body_text:
+        article.content_text = body_text[:5000]
+        if not article.summary or len(article.summary) < 120:
+            article.summary = body_text[:500]
 
     raw_dates = []
     raw_dates.extend(extract_json_ld_dates(soup))

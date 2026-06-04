@@ -31,6 +31,7 @@ class Article:
     raw_date: str = ""
     date_source: str = ""
     collection_url: str = ""
+    content_text: str = ""
     matched_keywords: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:

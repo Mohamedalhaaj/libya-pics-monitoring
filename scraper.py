@@ -170,6 +170,28 @@ EXPLICIT_LIBYA_KEYWORDS = [
     "البريقة",
     "الخليج العربي للنفط",
     "البعثة الأممية",
+    "رئاسة الوزراء",
+    "حكومة الوحدة",
+    "حكومة الاستقرار",
+    "مجلس النواب",
+    "المجلس الأعلى للدولة",
+    "المفوضية الوطنية العليا للانتخابات",
+    "مصرف ليبيا المركزي",
+    "المؤسسة الوطنية للنفط",
+    "المنفي",
+    "الدبيبة",
+    "الدبيبه",
+    "حفتر",
+    "عقيلة صالح",
+    "تكالة",
+    "باتيلي",
+    "تيتيه",
+    "وليامز",
+    "الكبير",
+    "طرابلسي",
+    "حماد",
+    "باشاغا",
+    "الدبيبة",
 ]
 
 LIBYA_SOURCE_IDS = {
@@ -235,6 +257,31 @@ PUBLIC_AFFAIRS_KEYWORDS = [
     "صحة",
     "مستشفى",
     "حقوق الإنسان",
+]
+
+INTERNATIONAL_NOISE_KEYWORDS = [
+    "iran",
+    "israel",
+    "gaza",
+    "ukraine",
+    "russia",
+    "china",
+    "syria",
+    "lebanon",
+    "iraq",
+    "sudan",
+    "trump",
+    "إيران",
+    "إسرائيل",
+    "غزة",
+    "أوكرانيا",
+    "روسيا",
+    "الصين",
+    "سوريا",
+    "لبنان",
+    "العراق",
+    "السودان",
+    "ترامب",
 ]
 
 async def scrape_source(
@@ -314,10 +361,13 @@ async def scrape_source(
     raw_candidates: list[Article] = []
     rejected_date_count = 0
     rejected_relevance_count = 0
+    rejected_non_article_count = 0
     date_parsed_count = 0
 
     for article in parsed_candidates:
         enrich_article(article, start_date)
+        if article.published_at:
+            date_parsed_count += 1
         if not looks_like_article_url(article.url):
             article.notes = append_note(article.notes, "non_article_url")
             article.relevance_status = "rejected"
@@ -325,6 +375,7 @@ async def scrape_source(
             article.qa_status = "rejected"
             article.qa_notes = "Rejected because URL is a listing, search, tag, category, or other non-article page"
             rejected_relevance_count += 1
+            rejected_non_article_count += 1
             raw_candidates.append(article)
             continue
         relevance_ok, relevance_reason = check_libya_relevance(article, source)
@@ -340,8 +391,6 @@ async def scrape_source(
 
         date_status = classify_date(article, start_date, end_date)
         article.date_status = date_status
-        if article.published_at:
-            date_parsed_count += 1
         if date_status == "in_range":
             article.include_candidate = True
             article.qa_status = "approved"
@@ -387,8 +436,13 @@ async def scrape_source(
             rejected_relevance_count=rejected_relevance_count,
             uncertain_date_count=len(review_queue),
             errors=[*errors, *article_fetch_errors],
+            non_article_count=rejected_non_article_count,
         ),
         error=" | ".join([*errors, *article_fetch_errors][:3]),
+        notes=(
+            f"rejected_non_article={rejected_non_article_count}; "
+            f"article_fetch_errors={len(article_fetch_errors)}"
+        ),
     )
 
     if verification.zero_result_reason:
@@ -528,17 +582,20 @@ def classify_date(article: Article, start_date: datetime | None, end_date: datet
 
 def check_libya_relevance(article: Article, source: dict) -> tuple[bool, str]:
     url_path = unquote(urlparse(article.url).path)
-    text = f"{article.title} {article.summary} {url_path} {article.section}".casefold()
+    text = f"{article.title} {article.summary} {article.content_text} {url_path} {article.section}".casefold()
     matched = [keyword for keyword in EXPLICIT_LIBYA_KEYWORDS if keyword.casefold() in text]
     if matched:
         return True, f"keyword_match:{matched[0]}"
+    noise_match = next((keyword for keyword in INTERNATIONAL_NOISE_KEYWORDS if keyword.casefold() in text), "")
+    if noise_match:
+        return False, f"global_news_without_libya_angle:{noise_match}"
     if source["id"] == "lana":
         return False, "lana_requires_explicit_libya_angle"
     topical_match = next((keyword for keyword in PUBLIC_AFFAIRS_KEYWORDS if keyword.casefold() in text), "")
     if source["id"] in LIBYA_SOURCE_IDS and topical_match:
         return True, f"libya_source_topic:{topical_match}"
-    if source["id"] in LIBYA_SOURCE_IDS and not source.get("require_keyword_match"):
-        return True, "libya_source"
+    if source["id"] in LIBYA_SOURCE_IDS:
+        return False, "libya_source_without_article_level_evidence"
     return False, "not_libya_related"
 
 
@@ -781,6 +838,7 @@ def determine_zero_reason(
     rejected_relevance_count: int,
     uncertain_date_count: int,
     errors: list[str],
+    non_article_count: int = 0,
 ) -> str:
     if accepted_count:
         return ""
@@ -790,13 +848,18 @@ def determine_zero_reason(
             return "blocked_by_site"
         return "fetch_failed"
     if candidate_count == 0:
-        return "no_links_found"
-    if article_pages_opened and date_parsed_count == 0 and uncertain_date_count:
+        return "no_article_links_found"
+    if non_article_count and non_article_count >= max(candidate_count - 1, 1):
+        return "selector_failed"
+    if article_pages_opened and date_parsed_count == 0 and (uncertain_date_count or rejected_date_count):
         return "date_parsing_failed"
-    if rejected_date_count and rejected_date_count >= candidate_count - rejected_relevance_count - uncertain_date_count:
+    relevant_candidate_count = candidate_count - rejected_relevance_count
+    if rejected_date_count and relevant_candidate_count > 0 and rejected_date_count >= relevant_candidate_count - uncertain_date_count:
         return "all_items_outside_date_window"
     if rejected_relevance_count and rejected_relevance_count >= candidate_count - rejected_date_count - uncertain_date_count:
         return "all_items_failed_relevance_filter"
+    if uncertain_date_count and uncertain_date_count >= candidate_count - rejected_relevance_count - rejected_date_count:
+        return "date_uncertain_review_required"
     return "unknown"
 
 
