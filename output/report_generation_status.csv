@@ -1,0 +1,9 @@
+﻿check,status,value,threshold,result,notes
+tier1_failure_rate,0.0%,0.0%,max 20%,pass,0/10 Tier 1 sources failed: 
+tier2_failure_rate,0.0%,0.0%,max 20%,pass,0/8 Tier 2 sources failed: 
+accepted_article_floor,34,34,>= 40,block,Accepted articles below floor; secondary discovery pass is required before publication.
+cluster_floor,32,32,>= 20,pass,Story cluster count meets production floor.
+editorial_qa,0,0,0 failures,pass,All editorial QA checks passed.
+temporal_validation,0,0,0 stale stories,pass,Every final item has a publication date or material update inside the monitoring window.
+mandatory_section_search,0,0,0 unsearched sections,pass,All mandatory PICS sections were actively searched.
+section_coverage_strength,3,3,audit weak/empty sections,pass,Politics=weak_after_targeted_search; Military & Security=weak_after_targeted_search; Environment=empty_after_targeted_search

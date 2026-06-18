@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, time, timezone
+from calendar import monthrange
+from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from dateutil import parser as date_parser
 
+TRIPOLI_TZ = ZoneInfo("Africa/Tripoli")
 
 ARABIC_MONTHS = {
     "يناير": 1,
@@ -47,7 +50,7 @@ def parse_cli_date(value: str | None, end_of_day: bool = False) -> datetime | No
     if isinstance(parsed, datetime):
         if parsed.time() == time.min and end_of_day:
             parsed = datetime.combine(parsed.date(), time.max)
-        return parsed
+        return to_tripoli_naive(parsed)
     if isinstance(parsed, date):
         return datetime.combine(parsed, time.max if end_of_day else time.min)
     return None
@@ -63,13 +66,28 @@ def parse_article_date(value: str | None) -> datetime | None:
     arabic_date = parse_arabic_date(value)
     if arabic_date:
         return arabic_date
+    day_first_date = parse_day_first_numeric_date(value)
+    if day_first_date:
+        return day_first_date
     try:
         parsed = date_parser.parse(value, fuzzy=True)
     except (TypeError, ValueError, OverflowError):
         return None
     if parsed.tzinfo:
-        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
-    return parsed
+        return to_tripoli_naive(parsed)
+    return to_tripoli_naive(parsed)
+
+
+def parse_day_first_numeric_date(value: str) -> datetime | None:
+    match = re.search(r"\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b", value)
+    if not match:
+        return None
+    day = int(match.group(1))
+    month = int(match.group(2))
+    year = int(match.group(3))
+    if day > 12 or month <= 12:
+        return safe_datetime(year, month, day)
+    return None
 
 
 def normalize_digits(value: str) -> str:
@@ -113,20 +131,23 @@ def has_exact_date_in_url(url: str) -> bool:
 
 def parse_relative_date(value: str) -> datetime | None:
     normalized = value.casefold()
+    today = datetime.now(TRIPOLI_TZ).replace(tzinfo=None, microsecond=0)
+    if "أمس" in normalized or "امس" in normalized or "yesterday" in normalized:
+        return today - timedelta(days=1)
+    if "اليوم" in normalized or "today" in normalized:
+        return today
     relative_markers = [
         "ago",
         "hour",
         "minute",
-        "today",
         "منذ",
         "ساعة",
         "ساعات",
         "دقيقة",
         "دقائق",
-        "اليوم",
     ]
     if any(marker in normalized for marker in relative_markers):
-        return datetime.utcnow().replace(microsecond=0)
+        return today
     return None
 
 
@@ -149,11 +170,17 @@ def parse_date_from_url(url: str) -> datetime | None:
             continue
         year = int(match.group(1))
         month = int(match.group(2))
-        day = int(match.group(3)) if len(match.groups()) >= 3 and match.group(3) else 1
+        day = int(match.group(3)) if len(match.groups()) >= 3 and match.group(3) else monthrange(year, month)[1]
         parsed = safe_datetime(year, month, day)
         if parsed:
             return parsed
     return None
+
+
+def to_tripoli_naive(value: datetime) -> datetime:
+    if value.tzinfo:
+        return value.astimezone(TRIPOLI_TZ).replace(tzinfo=None)
+    return value.replace(tzinfo=TRIPOLI_TZ).astimezone(TRIPOLI_TZ).replace(tzinfo=None)
 
 
 def in_date_range(

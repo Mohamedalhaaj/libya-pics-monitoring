@@ -1,0 +1,18 @@
+FINAL PICS REPORT NOT GENERATED
+
+Coverage period: 2026-06-01 to 2026-06-01
+
+The collection run failed production trust gates. A final UNSMIL/PICS report cannot be trusted until the issues below are resolved and the collection is rerun.
+
+- accepted_article_floor: 1 (threshold: >= 40)
+  Accepted articles below floor; secondary discovery pass is required before publication.
+- cluster_floor: 1 (threshold: >= 20)
+  Story cluster count below floor; run cluster_integrity_audit and split unrelated developments.
+- mandatory_section_search: 8 (threshold: 0 unsearched sections)
+  United Nations; Politics; Military & Security; Human Rights & Rule of Law; Economy & Energy; Environment; Regional & International; Varieties
+
+Required next actions:
+- Review source_failure_report.csv for failed source diagnostics.
+- Restore source/network access and rerun collection.
+- If accepted_article_floor remains below 40, run a secondary discovery pass.
+- If cluster_floor remains below 20, run cluster integrity review and split unrelated developments.

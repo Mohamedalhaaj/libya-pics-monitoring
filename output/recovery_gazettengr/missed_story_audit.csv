@@ -1,0 +1,23 @@
+﻿category,expected,found,number_of_items,sources_checked,specific_search_terms_used,status,notes
+United Nations,yes,no,0,,UNSMIL; Tetteh; Koury; البعثة الأممية; الأمم المتحدة; تيتيه; خوري,not_found_but_searched,No collected item matched this category in the configured live source set.
+Politics,yes,no,0,,structured dialogue; elections; House of Representatives; High State Council; حوار; انتخابات; مجلس النواب; المجلس الأعلى للدولة,not_found_but_searched,No collected item matched this category in the configured live source set.
+Structured Dialogue,yes,no,0,,structured dialogue; dialogue committee; political roadmap; الحوار المهيكل; لجنة الحوار; خارطة الطريق,not_found_but_searched,No collected item matched this category in the configured live source set.
+Government Affairs,yes,no,0,,GNU; Dbeibah; Presidential Council; Menfi; government; حكومة الوحدة; الدبيبة; المجلس الرئاسي; المنفي,not_found_but_searched,No collected item matched this category in the configured live source set.
+Elections,yes,no,0,,elections; HNEC; electoral laws; انتخابات; المفوضية الوطنية العليا للانتخابات; القوانين الانتخابية,not_found_but_searched,No collected item matched this category in the configured live source set.
+Military & Security,yes,no,0,,security; clashes; Zawiya; Kufra; أمن; اشتباكات; الزاوية; الكفرة,not_found_but_searched,No collected item matched this category in the configured live source set.
+Migration,yes,no,0,,migration; migrants; UNHCR; IOM; deportation; trafficking; هجرة; مهاجرين; لاجئين; ترحيل; اتجار بالبشر,not_found_but_searched,No collected item matched this category in the configured live source set.
+Human Rights,yes,no,0,,human rights; rights violations; detention; حقوق الإنسان; انتهاكات; احتجاز,not_found_but_searched,No collected item matched this category in the configured live source set.
+Rule of Law,yes,no,0,,Attorney General; Audit Bureau; Anti-Corruption; prosecution; النائب العام; ديوان المحاسبة; مكافحة الفساد; النيابة,not_found_but_searched,No collected item matched this category in the configured live source set.
+Central Bank,yes,no,0,,Central Bank; CBL; liquidity; salary; مصرف ليبيا المركزي; السيولة; المرتبات,not_found_but_searched,No collected item matched this category in the configured live source set.
+Oil,yes,no,0,,NOC; National Oil Corporation; oil; Ras Lanuf; المؤسسة الوطنية للنفط; النفط; رأس لانوف,not_found_but_searched,No collected item matched this category in the configured live source set.
+Energy,yes,no,0,,fuel; Brega; gas; energy; الوقود; البريقة; الغاز; الطاقة,not_found_but_searched,No collected item matched this category in the configured live source set.
+Electricity,yes,no,0,,electricity; power grid; GECOL; الكهرباء; الشبكة العامة; الشركة العامة للكهرباء,not_found_but_searched,No collected item matched this category in the configured live source set.
+Reconstruction,yes,no,0,,reconstruction; Derna; development projects; إعادة الإعمار; درنة; مشروعات التنمية,not_found_but_searched,No collected item matched this category in the configured live source set.
+Economy,yes,no,0,,Central Bank; NOC; oil; fuel; electricity; Audit Bureau; مصرف ليبيا المركزي; المؤسسة الوطنية للنفط; النفط; الوقود; الكهرباء; ديوان المحاسبة,not_found_but_searched,No collected item matched this category in the configured live source set.
+Environment,yes,no,0,,environment; weather; floods; climate; water; groundwater; livestock; بيئة; طقس; فيضانات; مناخ; مياه; مياه جوفية; الثروة الحيوانية,not_found_but_searched,No collected item matched this category in the configured live source set.
+Regional Diplomacy,yes,no,0,,regional diplomacy; Tunisia; Egypt; Italy; France; Uganda; تونس; مصر; إيطاليا; فرنسا; أوغندا,not_found_but_searched,No collected item matched this category in the configured live source set.
+Regional & International,yes,no,0,,Reuters Libya; Anadolu Libya; international Libya; ليبيا دولي; ليبيا إقليمي,not_found_but_searched,No collected item matched this category in the configured live source set.
+Analysis,yes,no,0,,analysis; commentary; opinion; تحليل; تعليق,not_found_but_searched,No collected item matched this category in the configured live source set.
+Opinion,yes,no,0,,opinion; column; commentary; رأي; مقال,not_found_but_searched,No collected item matched this category in the configured live source set.
+Features,yes,no,0,,feature; interview; podcast; long-form; تقرير; مقابلة; بودكاست,not_found_but_searched,No collected item matched this category in the configured live source set.
+Varieties,yes,no,0,,sports Libya; culture Libya; analysis Libya; opinion Libya; رياضة ليبيا; ثقافة ليبيا; تحليل ليبيا; رأي ليبيا,not_found_but_searched,No collected item matched this category in the configured live source set.

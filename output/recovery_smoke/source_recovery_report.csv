@@ -1,0 +1,4 @@
+﻿source,failure_type,attempted_recovery_methods,successful_method,articles_recovered,remaining_issue
+LANA,,homepage; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,22,
+Libya 24,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests; requests:article_page_verification,8,
+RNA Reportage,,homepage; requests; category_pages; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_search_fallback; article_page_verification,requests; requests:article_page_verification,16,

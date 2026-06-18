@@ -1,0 +1,6 @@
+﻿check,status,value,threshold,result,notes
+tier1_failure_rate,0.0%,0.0%,max 20%,pass,0/3 Tier 1 sources failed: 
+tier2_failure_rate,0.0%,0.0%,max 20%,pass,0/0 Tier 2 sources failed: 
+accepted_article_floor,5,5,>= 40,block,Accepted articles below floor; secondary discovery pass is required before publication.
+cluster_floor,4,4,>= 20,block,Story cluster count below floor; run cluster_integrity_audit and split unrelated developments.
+editorial_qa,0,0,0 failures,pass,All editorial QA checks passed.

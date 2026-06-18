@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 from copy import deepcopy
 
 from parsers.common import (
@@ -57,6 +59,10 @@ class SelectorOverrideParser(GenericListParser):
             section_node = container.select_one(selectors.get("section", ".category"))
             if section_node:
                 section = clean_text(section_node.get_text(" ", strip=True))
+            effective_keywords = [*self.keywords, *self.source.get("search_keywords", [])]
+            matched_keywords = match_keywords(f"{title} {summary} {url}", effective_keywords)
+            if self.source.get("require_keyword_match") and not matched_keywords:
+                continue
             articles.append(
                 build_article(
                     source=self.source,
@@ -69,7 +75,7 @@ class SelectorOverrideParser(GenericListParser):
                     published_at=published_at,
                     raw_date=raw_date,
                     date_source=date_source,
-                    matched_keywords=match_keywords(f"{title} {summary} {url}", self.keywords),
+                    matched_keywords=matched_keywords,
                 )
             )
         return deduplicate_articles(articles)
@@ -141,6 +147,91 @@ class LibyaObserverParser(SelectorOverrideParser):
         "date": "time, .date, .created, span[class*='date']",
         "section": ".category, .field--name-field-category",
     }
+
+
+class LibyaAlAhrarParser(SelectorOverrideParser):
+    parser_name = "libya_al_ahrar"
+    article_url_patterns = ("/20",)
+    selector_overrides = {
+        "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .news-item, .card",
+        "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, a[href*='/20']",
+        "url": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, a[href*='/20']",
+        "summary": ".entry-summary, .excerpt, .post-excerpt, p",
+        "date": "time, .entry-date, .date, .post-date, span[class*='date']",
+        "section": ".category, .cat-links, .post-category",
+    }
+
+
+class AlMashhadParser(SelectorOverrideParser):
+    parser_name = "al_mashhad"
+    article_url_patterns = ("/article/",)
+    selector_overrides = {
+        "article": "article, .post, .card, .news-item, .views-row, li, div[class*='article']",
+        "title": "h1 a, h2 a, h3 a, h4 a, a[href*='/article/']",
+        "url": "h1 a, h2 a, h3 a, h4 a, a[href*='/article/']",
+        "summary": ".summary, .excerpt, .description, p",
+        "date": "time, .date, .created, .published, span[class*='date'], div[class*='date']",
+        "section": ".category, .section, .breadcrumb",
+    }
+
+    def parse(self, html: str):
+        articles = []
+        soup = soup_from_html(html)
+        next_data = soup.select_one("script#__NEXT_DATA__")
+        if not next_data:
+            return deduplicate_articles(articles)
+        raw_payload = next_data.string or next_data.get_text("", strip=True)
+        if not raw_payload:
+            return deduplicate_articles(articles)
+        try:
+            payload = json.loads(raw_payload)
+        except json.JSONDecodeError:
+            return deduplicate_articles(articles)
+
+        effective_keywords = self.source.get("search_keywords") or self.keywords
+        section_id = self._section_id()
+        for item in self._payload_items(payload):
+            title = clean_text(str(item.get("title") or item.get("name") or ""))
+            slug = str(item.get("slug") or "").strip("/")
+            article_id = item.get("id")
+            if not title or not slug or not article_id:
+                continue
+            summary = clean_text(str(item.get("summary") or item.get("description") or item.get("excerpt") or ""))
+            matched_keywords = match_keywords(f"{title} {summary} {slug}", effective_keywords)
+            if self.source.get("require_keyword_match") and not matched_keywords:
+                continue
+            url = normalize_url(self.collection_url, f"/article/{section_id}/{article_id}-{slug}/", self.source["id"])
+            if not url:
+                continue
+            articles.append(
+                build_article(
+                    source=self.source,
+                    collection_url=self.collection_url,
+                    parser_used=self.parser_name,
+                    title=title,
+                    url=url,
+                    summary=summary,
+                    section=clean_text(str(item.get("category") or "")),
+                    matched_keywords=matched_keywords,
+                )
+            )
+        return deduplicate_articles(articles)
+
+    def _section_id(self) -> str:
+        match = re.search(r"/section/([^/?#]+)/?", self.collection_url)
+        if match:
+            return match.group(1)
+        return "773112298002792-News"
+
+    def _payload_items(self, value):
+        if isinstance(value, dict):
+            if value.get("id") and value.get("title") and value.get("slug"):
+                yield value
+            for child in value.values():
+                yield from self._payload_items(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from self._payload_items(child)
 
 
 class LibyaReviewParser(EanLibyaParser):

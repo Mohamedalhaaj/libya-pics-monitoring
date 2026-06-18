@@ -1,0 +1,2 @@
+﻿source,failure_type,attempted_recovery_methods,successful_method,articles_recovered,remaining_issue
+Gazettengr,timeout,,,0,fetch_failed

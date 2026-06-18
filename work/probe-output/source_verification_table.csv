@@ -1,0 +1,2 @@
+﻿source_name,source_url,fetch_status,candidate_links_found,article_pages_opened,date_parsed_count,accepted_count,rejected_date_count,rejected_relevance_count,uncertain_date_count,failed_count,zero_result_reason,error,notes,checked_at
+Al Sabaah,https://alsabaah.ly/category/libya/ | https://alsabaah.ly/ | https://alsabaah.ly/?s=2026%2F06,ok,10,10,9,2,5,3,0,0,,,rejected_non_article=1; article_fetch_errors=0,2026-06-04T14:13:42Z

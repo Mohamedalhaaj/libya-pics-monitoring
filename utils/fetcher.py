@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 import requests
 from playwright.async_api import Browser, Page, async_playwright
@@ -42,6 +43,8 @@ class BrowserFetcher:
         self.headless = headless
         self._playwright = None
         self._browser: Browser | None = None
+        self._session = requests.Session()
+        self._session.headers.update(DEFAULT_HEADERS)
 
     async def __aenter__(self) -> "BrowserFetcher":
         self._playwright = await async_playwright().start()
@@ -103,7 +106,28 @@ class BrowserFetcher:
         response = requests.get(
             url,
             headers=DEFAULT_HEADERS,
-            timeout=max(10, int(self.timeout_ms / 1000)),
+            timeout=max(3, int(self.timeout_ms / 1000)),
+            allow_redirects=True,
+        )
+        response.raise_for_status()
+        return FetchResult(url=url, html=response.text, final_url=response.url, status_code=response.status_code)
+
+    def fetch_with_plain_requests(self, url: str) -> FetchResult:
+        response = requests.get(
+            url,
+            timeout=max(3, int(self.timeout_ms / 1000)),
+            allow_redirects=True,
+        )
+        response.raise_for_status()
+        return FetchResult(url=url, html=response.text, final_url=response.url, status_code=response.status_code)
+
+    def fetch_with_session(self, url: str) -> FetchResult:
+        parsed = urlparse(url)
+        if parsed.scheme and parsed.netloc:
+            self._session.headers.update({"Referer": f"{parsed.scheme}://{parsed.netloc}/"})
+        response = self._session.get(
+            url,
+            timeout=max(3, int(self.timeout_ms / 1000)),
             allow_redirects=True,
         )
         response.raise_for_status()

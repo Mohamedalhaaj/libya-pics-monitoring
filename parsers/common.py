@@ -35,11 +35,20 @@ NOISE_URL_PARTS = (
     "whatsapp",
     "mailto:",
     "javascript:",
+    "?s=",
+    "/search",
     "/tag/",
     "/tags/",
     "/category/",
     "/section/",
     "/author/",
+    "/live/",
+    "/timeline/",
+    "/ads/",
+    "/frequency/",
+    "/latest/",
+    "/exchange-rates",
+    "/news-in-images",
     "/about",
     "/contact",
     "/privacy",
@@ -213,10 +222,13 @@ def extract_article_page_details(html: str, article: Article) -> Article:
             article.summary = body_text[:500]
 
     raw_dates = []
-    raw_dates.extend(extract_json_ld_dates(soup))
+    raw_dates.extend(extract_json_ld_publication_dates(soup))
     for selector in [
         "meta[property='article:published_time']",
         "meta[name='article:published_time']",
+        "meta[property='og:published_time']",
+        "meta[name='pubdate']",
+        "meta[name='publishdate']",
         "meta[name='date']",
         "meta[itemprop='datePublished']",
         "time",
@@ -254,12 +266,16 @@ def extract_article_page_details(html: str, article: Article) -> Article:
         if parsed:
             article.published_at = parsed
             article.raw_date = raw_date
-            article.date_source = "article_page"
+            article.date_source = "article_publication"
             break
     return article
 
 
 def extract_json_ld_dates(soup: BeautifulSoup) -> list[str]:
+    return extract_json_ld_publication_dates(soup)
+
+
+def extract_json_ld_publication_dates(soup: BeautifulSoup) -> list[str]:
     dates: list[str] = []
     for node in soup.select("script[type='application/ld+json']"):
         raw = node.string or node.get_text("", strip=True)
@@ -272,7 +288,7 @@ def extract_json_ld_dates(soup: BeautifulSoup) -> list[str]:
         for item in flatten_json_ld(payload):
             if not isinstance(item, dict):
                 continue
-            for key in ("datePublished", "dateCreated", "dateModified", "uploadDate"):
+            for key in ("datePublished", "dateCreated", "uploadDate"):
                 value = item.get(key)
                 if isinstance(value, str):
                     dates.append(value)

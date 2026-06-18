@@ -1,0 +1,4 @@
+﻿source,failure_type,attempted_recovery_methods,successful_method,articles_recovered,remaining_issue
+Libya Observer,,category_pages; requests; article_page_verification,requests; requests:article_page_verification,16,
+Libya Review,,category_pages; requests; article_page_verification,requests; requests:article_page_verification,25,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,6,

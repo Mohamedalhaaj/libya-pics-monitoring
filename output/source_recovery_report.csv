@@ -1,0 +1,166 @@
+﻿source,failure_type,attempted_recovery_methods,successful_method,articles_recovered,remaining_issue
+Al Wasat,,category_pages; requests; requests_with_browser_headers; rss_feeds; session_reuse; playwright_default; article_page_verification,requests_with_browser_headers; requests:article_page_verification,19,
+Libya Observer,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,12,
+Libya Al Ahrar,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Ean Libya,,homepage; requests; category_pages; rss_feeds; article_search_fallback; article_page_verification,requests; requests:article_page_verification,21,
+Al Menassa,,homepage; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests; requests:article_page_verification,2,
+LANA,,homepage; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,13,
+Libya 24,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests; requests:article_page_verification,11,
+Libya Herald,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests; requests:article_page_verification,5,
+RNA Reportage,,homepage; requests; category_pages; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_search_fallback; article_page_verification,requests; requests:article_page_verification,14,
+Al Sabaah,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Review,,category_pages; requests; rss_feeds; article_page_verification,requests; requests:article_page_verification,19,
+Address Libya,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests; requests:article_page_verification,11,
+Al Shahed,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests; requests:article_page_verification,7,
+Al Marsad,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,10,
+Libya Update,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests_with_browser_headers; requests; requests:article_page_verification; requests_with_browser_headers:article_page_verification,10,
+Fawasel Media,,category_pages; requests; homepage; rss_feeds; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Tanasuh,,category_pages; requests; requests_with_browser_headers; homepage; rss_feeds; article_page_verification,requests_with_browser_headers; requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Akhbar Libya 24,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,7,
+Al Saaa 24,,category_pages; requests; homepage; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,6,
+Asharq Al Awsat,,homepage; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; sitemap_discovery; category_pages; archive_pages,requests_with_browser_headers; requests_with_browser_headers:sitemap_discovery; playwright_default:sitemap_discovery; playwright_default:category_pages; requests_with_browser_headers:category_pages; playwright_default:archive_pages,0,no_article_links_found
+Al Mashhad,fetch_failed,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; sitemap_discovery; archive_pages,playwright_default:sitemap_discovery; playwright_default:category_pages; playwright_default:archive_pages,0,no_article_links_found
+Al Ain,,category_pages; requests; requests_with_browser_headers; session_reuse; playwright_default; homepage; rss_feeds; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Arabi21,,homepage; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+New Arab,,category_pages; requests; rss_feeds; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+ANSA,,homepage; requests; category_pages; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Anadolu Agency,fetch_failed,homepage; requests; requests_with_browser_headers; rss_feeds; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,0,all_items_failed_relevance_filter
+The Guardian,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+BSS News,,homepage; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+CH Aviation,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Volcanodiscovery,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification; requests_with_browser_headers:article_page_verification,0,all_items_outside_date_window
+Reuters,,homepage; requests; requests_with_browser_headers; session_reuse; playwright_default; rss_feeds; sitemap_discovery; category_pages; archive_pages,playwright_default:sitemap_discovery; playwright_default:category_pages; playwright_default:archive_pages,0,no_article_links_found
+AP,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+BBC,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Al Jazeera Arabic - Libya,,category_pages; requests; rss_feeds; requests_with_browser_headers; session_reuse; playwright_default; article_page_verification,requests; requests:article_page_verification,7,
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,2,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Libya Update,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests:article_page_verification,6,
+Address Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,1,
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Asharq Al Awsat,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+New Arab,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Al Jazeera Arabic - Libya,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests:article_page_verification; requests_with_browser_headers:article_page_verification,1,
+Anadolu Agency,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,0,all_items_failed_relevance_filter
+Reuters,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+AP,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+BBC,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,5,
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Al Shahed,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,4,
+Al Marsad,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,9,
+Fawasel Media,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Tanasuh,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,3,
+Akhbar Libya 24,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,7,
+Al Ain,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Arabi21,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,3,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,7,
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Al Marsad,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,9,
+Akhbar Libya 24,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,7,
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,2,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Address Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Al Marsad,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,9,
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,3,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Address Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Al Marsad,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,9,
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,3,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Libya Update,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests:article_page_verification,6,
+Address Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,2,
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,3,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Libya Update,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests:article_page_verification,6,
+Address Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Asharq Al Awsat,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+New Arab,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Al Jazeera Arabic - Libya,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests:article_page_verification; requests_with_browser_headers:article_page_verification,1,
+Anadolu Agency,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,0,all_items_failed_relevance_filter
+Reuters,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+AP,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_failed_relevance_filter
+BBC,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,8,
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Al Shahed,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,4,
+Al Marsad,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; article_page_verification,session_reuse; requests_with_browser_headers:article_page_verification,9,
+Fawasel Media,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Tanasuh,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,3,
+Akhbar Libya 24,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,7,
+Al Ain,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Arabi21,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Libya Observer,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,25,
+Al Wasat,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests_with_browser_headers:article_page_verification,37,
+Ean Libya,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Libya Al Ahrar,,article_search_fallback; requests; requests_with_browser_headers; article_page_verification,requests_with_browser_headers; requests_with_browser_headers:article_page_verification,4,
+Al Menassa,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers; session_reuse; playwright_default,requests; requests:article_page_verification,3,
+Libya Review,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,13,
+Libya 24,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,9,
+LANA,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,all_items_outside_date_window
+Al Sabaah,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,0,selector_failed
+Asharq Al Awsat,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+New Arab,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
+Al Jazeera Arabic - Libya,,article_search_fallback; requests; article_page_verification; requests_with_browser_headers,requests; requests:article_page_verification; requests_with_browser_headers:article_page_verification,1,
+Libya Herald,,article_search_fallback; requests; article_page_verification,requests; requests:article_page_verification,11,
+RNA Reportage,,article_search_fallback; requests,requests,0,no_article_links_found
+Arabi21,,article_search_fallback; requests; requests_with_browser_headers; session_reuse; playwright_default,,0,no_article_links_found
