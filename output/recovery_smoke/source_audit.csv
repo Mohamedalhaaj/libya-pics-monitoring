@@ -1,0 +1,4 @@
+﻿source_name,fetch_status,discovery_sources,collection_timestamp,candidate_links_found,article_pages_opened,date_parsed_count,accepted_count,review_count,rejected_date_count,rejected_relevance_count,zero_result_reason,error
+LANA,ok,https://lana.gov.ly/category.php?lang=ar&id=8 | https://lana.gov.ly/ | https://lana.gov.ly/feed/,2026-06-10T15:35:47Z,33,10,32,22,0,1,10,,
+Libya 24,ok,https://libya24.tv/category/news/ | https://libya24.tv/ | https://libya24.tv/feed/,2026-06-10T15:36:11Z,28,10,28,6,2,8,12,,
+RNA Reportage,ok,https://reportage.ly/ | https://reportage.ly/category/news/ | https://reportage.ly/feed/,2026-06-10T15:36:26Z,63,10,54,7,9,21,26,,

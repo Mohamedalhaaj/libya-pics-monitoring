@@ -1,0 +1,35 @@
+﻿source,tier,candidate_links_found,article_pages_opened,verified_articles,accepted_articles,review_queue_items,rejected_articles,top_rejection_reason,status,notes
+ANSA,Tier 3,31,18,30,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+AP,Tier 3,261,26,84,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+Address Libya,Tier 2,57,34,44,0,1,13,not_selected_for_final_report,review_needed,zero_result_reason=all_items_outside_date_window
+Akhbar Libya 24,Tier 2,44,22,17,2,1,6,not_selected_for_final_report,healthy,accepted live items
+Al Ain,Tier 3,55,18,55,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+Al Jazeera Arabic - Libya,Tier 3,100,30,37,0,3,3,not_selected_for_final_report,review_needed,items collected but not auto-approved
+Al Marsad,Tier 2,85,30,15,2,1,8,not_selected_for_final_report,healthy,accepted live items
+Al Mashhad,Tier 3,0,0,0,0,0,0,,no_output,zero_result_reason=no_article_links_found; failed_fetches=1
+Al Menassa,Tier 1,41,36,9,0,1,6,category_or_search_page,review_needed,Tier 1 source produced no accepted articles
+Al Saaa 24,Tier 3,31,18,31,0,6,1,not_selected_for_final_report,review_needed,zero_result_reason=all_items_outside_date_window
+Al Sabaah,Tier 1,19,19,2,1,0,0,,healthy,zero_result_reason=selector_failed
+Al Shahed,Tier 2,38,26,28,0,0,12,not_selected_for_final_report,verified_not_accepted,article pages verified but rejected by date/relevance/editorial logic
+Al Wasat,Tier 1,809,50,107,3,34,21,not_selected_for_final_report,healthy,accepted live items
+Anadolu Agency,Tier 3,18,14,6,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter; failed_fetches=1
+Arabi21,Tier 3,5,5,4,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+Asharq Al Awsat,Tier 3,0,0,0,0,0,0,,no_output,zero_result_reason=no_article_links_found
+BBC,Tier 3,69,26,60,0,13,0,,review_needed,zero_result_reason=all_items_failed_relevance_filter
+BSS News,Tier 3,9,9,7,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+CH Aviation,Tier 3,27,18,26,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+Ean Libya,Tier 1,102,38,94,1,9,19,not_selected_for_final_report,healthy,zero_result_reason=all_items_outside_date_window
+Fawasel Media,Tier 2,16,16,12,0,0,0,,verified_not_accepted,zero_result_reason=all_items_outside_date_window
+LANA,Tier 1,159,50,43,0,0,13,not_selected_for_final_report,verified_not_accepted,zero_result_reason=all_items_outside_date_window; Tier 1 source produced no accepted articles
+Libya 24,Tier 1,224,50,32,0,3,10,not_selected_for_final_report,review_needed,Tier 1 source produced no accepted articles
+Libya Al Ahrar,Tier 1,66,36,34,2,0,2,not_selected_for_final_report,healthy,accepted live items
+Libya Herald,Tier 1,126,46,14,5,4,5,not_selected_for_final_report,healthy,accepted live items
+Libya Observer,Tier 1,244,44,29,8,15,4,not_selected_for_final_report,healthy,accepted live items
+Libya Review,Tier 2,139,46,87,6,48,8,not_selected_for_final_report,healthy,zero_result_reason=all_items_outside_date_window
+Libya Update,Tier 2,69,30,25,1,10,5,not_selected_for_final_report,healthy,accepted live items
+New Arab,Tier 3,13,13,13,0,0,0,,verified_not_accepted,zero_result_reason=all_items_outside_date_window
+RNA Reportage,Tier 1,63,18,63,1,9,5,not_selected_for_final_report,healthy,zero_result_reason=no_article_links_found
+Reuters,Tier 3,0,0,0,0,0,0,,no_output,zero_result_reason=no_article_links_found
+Tanasuh,Tier 2,20,12,7,2,0,1,not_selected_for_final_report,healthy,accepted live items
+The Guardian,Tier 3,31,18,25,0,0,0,,verified_not_accepted,zero_result_reason=all_items_failed_relevance_filter
+Volcanodiscovery,Tier 3,15,15,15,0,0,0,,verified_not_accepted,zero_result_reason=all_items_outside_date_window

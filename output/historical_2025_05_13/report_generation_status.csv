@@ -1,0 +1,9 @@
+﻿check,status,value,threshold,result,notes
+tier1_failure_rate,0.0%,0.0%,max 20%,pass,0/10 Tier 1 sources failed: 
+tier2_failure_rate,0.0%,0.0%,max 20%,pass,0/8 Tier 2 sources failed: 
+accepted_article_floor,0,0,>= 40,block,Accepted articles below floor; secondary discovery pass is required before publication.
+cluster_floor,0,0,>= 20,block,Story cluster count below floor; run cluster_integrity_audit and split unrelated developments.
+editorial_qa,0,0,0 failures,pass,All editorial QA checks passed.
+temporal_validation,0,0,0 stale stories,pass,Every final item has a publication date or material update inside the monitoring window.
+mandatory_section_search,8,8,0 unsearched sections,block,United Nations; Politics; Military & Security; Human Rights & Rule of Law; Economy & Energy; Environment; Regional & International; Varieties
+section_coverage_strength,0,0,audit weak/empty sections,pass,All searched sections met the configured story floor.

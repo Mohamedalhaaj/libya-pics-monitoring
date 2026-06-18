@@ -1,0 +1,5 @@
+﻿source,candidate_links,article_links,non_article_links,inside_window,outside_window,precision_rate,top_failure_reason
+Libya Observer,1,1,0,0,1,100.0%,old_article
+Libya Al Ahrar,4,4,0,0,4,100.0%,old_article
+Al Wasat,25,25,0,0,12,100.0%,date_uncertain_article
+Al Mashhad,0,0,0,0,0,0.0%,

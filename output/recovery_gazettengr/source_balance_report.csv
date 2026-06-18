@@ -1,0 +1,2 @@
+﻿source,tier,candidate_links_found,article_pages_opened,verified_articles,accepted_articles,review_queue_items,rejected_articles,top_rejection_reason,status,notes
+Gazettengr,Tier 3,0,0,0,0,0,0,,no_output,fetch_status=failed_fetch; zero_result_reason=fetch_failed; failed_fetches=10

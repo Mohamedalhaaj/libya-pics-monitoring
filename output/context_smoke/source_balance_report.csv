@@ -1,0 +1,3 @@
+﻿source,tier,candidate_links_found,article_pages_opened,verified_articles,accepted_articles,review_queue_items,rejected_articles,top_rejection_reason,status,notes
+Libya Observer,Tier 1,19,4,19,7,0,8,low_editorial_value,healthy,accepted live items
+Libya Review,Tier 2,38,7,32,0,29,0,,review_needed,zero_result_reason=all_items_outside_date_window

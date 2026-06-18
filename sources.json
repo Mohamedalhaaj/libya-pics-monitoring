@@ -18,9 +18,7 @@
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
       },
       "fallback_urls": [
-        "https://alwasat.ly/section/libya",
-        "https://alwasat.ly/section/all",
-        "https://alwasat.ly/"
+        "https://alwasat.ly/section/libya"
       ]
     },
     {
@@ -76,6 +74,7 @@
       "parser": "libya_observer",
       "enabled": true,
       "require_keyword_match": false,
+      "filter_discovery_to_date_window": true,
       "selectors": {
         "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
         "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
@@ -86,7 +85,8 @@
       },
       "fallback_urls": [
         "https://libyaobserver.ly/news",
-        "https://libyaobserver.ly/"
+        "https://libyaobserver.ly/inbrief",
+        "https://libyaobserver.ly/economy"
       ]
     },
     {
@@ -330,10 +330,19 @@
       "name": "Al Mashhad",
       "language": "ar",
       "country_focus": "Libya",
-      "url": "https://www.almashhad.com/latest/",
-      "parser": "generic_list",
+      "url": "https://www.almashhad.com/section/773112298002792-News/",
+      "parser": "al_mashhad",
       "enabled": true,
       "require_keyword_match": true,
+      "include_date_search_tokens": false,
+      "search_keywords": [
+        "ليبيا",
+        "طرابلس",
+        "بنغازي",
+        "الدبيبة",
+        "حفتر",
+        "البعثة الأممية"
+      ],
       "selectors": {
         "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
         "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
@@ -348,10 +357,11 @@
       "name": "Libya Al Ahrar",
       "language": "ar",
       "country_focus": "Libya",
-      "url": "https://libyaalahrar.tv/",
-      "parser": "generic_list",
+      "url": "https://libyaalahrar.tv/category/news/",
+      "parser": "libya_al_ahrar",
       "enabled": true,
       "require_keyword_match": false,
+      "search_keywords": [],
       "selectors": {
         "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
         "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
@@ -542,24 +552,6 @@
       }
     },
     {
-      "id": "gazettengr",
-      "name": "Gazettengr",
-      "language": "en",
-      "country_focus": "Libya",
-      "url": "https://gazettengr.com/",
-      "parser": "generic_list",
-      "enabled": true,
-      "require_keyword_match": true,
-      "selectors": {
-        "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
-        "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
-        "url": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
-        "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
-        "date": "time, .entry-date, .date, .created, .post-date",
-        "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
-    },
-    {
       "id": "ch_aviation",
       "name": "CH Aviation",
       "language": "en",
@@ -601,6 +593,42 @@
       "language": "en",
       "country_focus": "Libya",
       "url": "https://www.reuters.com/world/africa/",
+      "parser": "generic_list",
+      "enabled": true,
+      "require_keyword_match": true,
+      "selectors": {
+        "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
+        "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
+        "url": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
+        "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
+        "date": "time, .entry-date, .date, .created, .post-date",
+        "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
+      }
+    },
+    {
+      "id": "ap",
+      "name": "AP",
+      "language": "en",
+      "country_focus": "Libya",
+      "url": "https://apnews.com/hub/libya",
+      "parser": "generic_list",
+      "enabled": true,
+      "require_keyword_match": true,
+      "selectors": {
+        "article": "article, .post, .td_module_wrap, .jeg_post, .elementor-post, .views-row, .node, .gc, .u-clickable-card, .story, .card, li",
+        "title": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
+        "url": "h1 a, h2 a, h3 a, h4 a, .entry-title a, .post-title a, .td-module-title a, .jeg_post_title a, .card-title a, a",
+        "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
+        "date": "time, .entry-date, .date, .created, .post-date",
+        "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
+      }
+    },
+    {
+      "id": "bbc",
+      "name": "BBC",
+      "language": "en",
+      "country_focus": "Libya",
+      "url": "https://www.bbc.com/news/topics/c302m85qenyt",
       "parser": "generic_list",
       "enabled": true,
       "require_keyword_match": true,

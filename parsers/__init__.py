@@ -4,6 +4,7 @@ from parsers.base import BaseParser
 from parsers.generic import GenericListParser
 from parsers.source_specific import (
     AddressLibyaParser,
+    AlMashhadParser,
     AlMenassaParser,
     AlShahedParser,
     AlSaaa24Parser,
@@ -11,6 +12,7 @@ from parsers.source_specific import (
     AsharqAlAwsatParser,
     EanLibyaParser,
     LanaParser,
+    LibyaAlAhrarParser,
     Libya24Parser,
     LibyaHeraldParser,
     LibyaObserverParser,
@@ -22,6 +24,7 @@ from parsers.source_specific import (
 PARSERS: dict[str, type[BaseParser]] = {
     "generic_list": GenericListParser,
     "address_libya": AddressLibyaParser,
+    "al_mashhad": AlMashhadParser,
     "al_menassa": AlMenassaParser,
     "al_shahed": AlShahedParser,
     "al_saaa_24": AlSaaa24Parser,
@@ -29,6 +32,7 @@ PARSERS: dict[str, type[BaseParser]] = {
     "asharq_al_awsat": AsharqAlAwsatParser,
     "ean_libya": EanLibyaParser,
     "lana": LanaParser,
+    "libya_al_ahrar": LibyaAlAhrarParser,
     "libya_24": Libya24Parser,
     "libya_herald": LibyaHeraldParser,
     "libya_observer": LibyaObserverParser,

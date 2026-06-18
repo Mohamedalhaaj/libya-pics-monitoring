@@ -1,0 +1,4 @@
+﻿source_name,fetch_status,discovery_sources,collection_timestamp,candidate_links_found,article_pages_opened,date_parsed_count,accepted_count,review_count,rejected_date_count,rejected_relevance_count,zero_result_reason,error
+Al Wasat,ok,https://alwasat.ly/section/libya | https://alwasat.ly/section/all | https://alwasat.ly/,2026-06-09T09:26:23Z,109,8,9,0,42,9,58,all_items_outside_date_window,
+Ean Libya,ok,https://www.eanlibya.com/ | https://www.eanlibya.com/newsletter/ | https://www.eanlibya.com/?s=%D9%84%D9%8A%D8%A8%D9%8A%D8%A7,2026-06-09T09:26:34Z,57,8,22,4,17,16,20,,
+Libya Review,ok,https://libyareview.com/category/libya/ | https://libyareview.com/,2026-06-09T09:26:49Z,29,8,8,1,21,7,0,,
