@@ -207,6 +207,9 @@ def _render_headline(document: Document, headline: ReportHeadline) -> None:
                 _add_hyperlink(paragraph, source.url, label)
             else:
                 paragraph.add_run(label)
+    # Varieties feature items carry a short summary paragraph (SOP §8).
+    if headline.summary:
+        document.add_paragraph(headline.summary)
 
 
 def _add_section_heading(document: Document, text: str) -> None:

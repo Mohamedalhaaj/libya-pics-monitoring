@@ -56,10 +56,15 @@ class HeadlineSource:
 
 @dataclass(slots=True)
 class ReportHeadline:
-    """One editorial bullet: an English headline plus its cited sources."""
+    """One editorial bullet: an English headline plus its cited sources.
+
+    `summary` is the short paragraph that follows Varieties feature items
+    (Analysis | … / Feature | …) per the PICS SOP; empty for normal headlines.
+    """
 
     text: str
     sources: list[HeadlineSource] = field(default_factory=list)
+    summary: str = ""
 
     def render_sources(self) -> str:
         return " / ".join(source.render() for source in self.sources)
