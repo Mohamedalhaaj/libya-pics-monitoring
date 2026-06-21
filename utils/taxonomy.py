@@ -20,56 +20,71 @@ SECTION_ORDER: list[str] = [
     "Varieties",
 ]
 
-# Suggested subsections per section. Used to steer the enrichment model and to
-# order subsections within a section; the model may add an "Other ..." bucket.
+# Benchmark subsections per section, matching the PICS conversion SOP
+# (samples/PICS_headlines_conversion_SOP.md §8). Used to steer the enrichment
+# model and to order subsections within a section.
 SUGGESTED_SUBSECTIONS: dict[str, list[str]] = {
     "United Nations": [
-        "UNSMIL and political process",
-        "UN agencies and international support",
-        "Security Council and international mediation",
-        "Other UN news",
+        "Political Process",
+        "Structured Dialogue",
+        "SRSG Meetings",
+        "DSRSG Meetings",
+        "Migration",
+        "Other UN News",
     ],
     "Politics": [
-        "Political institutions and governance",
-        "Elections and constitutional process",
-        "Government and municipal affairs",
+        "Political Process",
+        "Structured Dialogue",
+        "Three Presidencies Agreement",
+        "US Initiative",
+        "Central Region",
+        "Migration Debate",
         "Other political news",
     ],
     "Military & Security": [
-        "Security and crime",
-        "Border and military affairs",
-        "Armed groups and ceasefire/security arrangements",
+        "Security Developments",
+        "Officials' Meetings",
+        "Border Security",
+        "Combating crime",
+        "Migration Security",
         "Other security news",
     ],
     "Human Rights & Rule of Law": [
-        "Migration and human trafficking",
-        "Justice and accountability",
-        "Health, children and vulnerable groups",
-        "Civil liberties and human rights",
-        "Other human rights and rule-of-law news",
+        "Migration",
+        "Rule of Law",
+        "Human Rights",
+        "Health",
+        "Social Affairs",
+        "Other Human Rights",
     ],
+    # Economy is always split into these fixed headings (SOP §8).
     "Economy": [
-        "Banking and currency",
-        "Energy and fuel",
-        "Markets, labour and services",
-        "Infrastructure and reconstruction",
+        "Banking",
+        "Energy",
+        "Reconstruction and infrastructure",
+        "Transport",
+        "Telecommunications",
         "Other economic news",
     ],
     "Environment": [
-        "Weather, climate and agriculture",
-        "Water and environmental resources",
-        "Other environment news",
+        "Climate",
+        "Environment",
+        "Water Resources",
+        "Other environmental news",
     ],
     "Regional & International": [
-        "Diplomacy and foreign relations",
-        "Regional security",
-        "Gaza/convoy-related Libya news",
+        "Cairo talks on Libya and regional files",
+        "Libya-Tunisia relations",
+        "Libya-Greece relations",
+        "International Relations",
+        "Migration",
         "Other regional and international news",
     ],
     "Varieties": [
-        "Culture, heritage and society",
-        "Sports",
-        "Other varieties",
+        "Analysis",
+        "Feature",
+        "Opinion",
+        "Think Tank",
     ],
 }
 

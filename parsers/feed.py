@@ -17,6 +17,7 @@ from parsers.base import BaseParser
 from parsers.generic import deduplicate_articles, match_keywords
 from utils.dates import parse_article_date
 from utils.models import Article
+from utils.outlets import english_outlet_name
 
 
 class FeedParser(BaseParser):
@@ -41,10 +42,12 @@ class FeedParser(BaseParser):
             outlet = item.find("source")
             source_name = self.source["name"]
             if outlet and outlet.get_text(strip=True):
-                source_name = outlet.get_text(strip=True)
-                suffix = f" - {source_name}"
+                raw_outlet = outlet.get_text(strip=True)
+                suffix = f" - {raw_outlet}"
                 if title.endswith(suffix):
                     title = title[: -len(suffix)].strip()
+                # SOP: visible source names must be English-only.
+                source_name = english_outlet_name(raw_outlet)
 
             matched = match_keywords(f"{title} {summary}", self.keywords)
             if self.source.get("require_keyword_match", True) and not matched:

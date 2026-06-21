@@ -1,5 +1,11 @@
 # UNSMIL/PICS Libya News Headlines — Report Methodology
 
+> **Authoritative rules:** the full, current conversion rules live in
+> [`samples/PICS_headlines_conversion_SOP.md`](../samples/PICS_headlines_conversion_SOP.md)
+> — benchmark subsections (§8), political-title tags (§9), exact formatting and
+> English-only source names (§7), and the QC checklist (§10). This file is a
+> condensed overview; the SOP wins where they differ.
+
 This document captures the format and editorial rules that the daily
 **Libya News Headlines** report must follow. It is the in-repo, diffable
 version of the original methodology brief
