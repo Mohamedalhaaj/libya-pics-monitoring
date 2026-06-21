@@ -249,25 +249,9 @@ def write_word_report(
             for headline in subsection.headlines:
                 _render_headline(document, headline)
 
-    # Source verification appendix (operational record, kept out of the body).
-    document.add_page_break()
-    appendix = document.add_paragraph()
-    appendix_run = appendix.add_run("Source Verification")
-    appendix_run.bold = True
-    appendix_run.font.size = Pt(14)
-
-    table = document.add_table(rows=1, cols=5)
-    table.style = "Table Grid"
-    for index, header in enumerate(["Source", "URL", "Status", "Articles", "Error"]):
-        table.rows[0].cells[index].text = header
-    for verification in verifications:
-        cells = table.add_row().cells
-        cells[0].text = verification.source_name
-        cells[1].text = verification.url or ""
-        cells[2].text = verification.status
-        cells[3].text = str(verification.articles_found)
-        cells[4].text = verification.error or ""
-
+    # The Word report must match the sample exactly: headlines + disclaimer only.
+    # The source-verification record lives in source_verification_table.csv, not
+    # in the document body. `verifications` is accepted for API compatibility.
     disclaimer = document.add_paragraph()
     disclaimer_run = disclaimer.add_run(taxonomy.DISCLAIMER)
     disclaimer_run.italic = True

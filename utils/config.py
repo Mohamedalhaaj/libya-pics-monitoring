@@ -23,6 +23,11 @@ def load_sources(path: str | Path) -> list[dict[str, Any]]:
             raise ValueError(f"Source {source.get('id', '<unknown>')} missing: {sorted(missing)}")
         if not source.get("enabled", True):
             continue
+        # Feed sources read RSS/Atom and don't use CSS selectors.
+        if source["parser"] == "feed":
+            if not (source.get("feed_url") or source.get("url")):
+                raise ValueError(f"Feed source {source['id']} requires feed_url or url")
+            continue
         selectors = source["selectors"]
         if "article" not in selectors or "title" not in selectors:
             raise ValueError(f"Source {source['id']} requires selectors.article and selectors.title")

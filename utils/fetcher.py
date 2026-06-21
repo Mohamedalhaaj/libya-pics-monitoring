@@ -4,6 +4,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
+import httpx
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,23 @@ class FetchResult:
     url: str
     html: str
     final_url: str
+
+
+async def fetch_text(url: str, timeout_ms: int = 25000) -> FetchResult:
+    """Fetch a URL as raw text over plain HTTP.
+
+    Used for RSS/Atom feeds: fetching a feed through a browser makes Chrome
+    render it in its XML viewer, so page.content() returns an HTML wrapper
+    instead of the raw <item> elements. A plain HTTP GET returns the real XML.
+    """
+    async with httpx.AsyncClient(
+        headers={"User-Agent": USER_AGENT, **EXTRA_HEADERS},
+        follow_redirects=True,
+        timeout=timeout_ms / 1000,
+    ) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+        return FetchResult(url=url, html=response.text, final_url=str(response.url))
 
 
 class BrowserFetcher:

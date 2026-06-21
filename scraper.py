@@ -19,7 +19,7 @@ from utils.exports import (
     write_verification_csv,
     write_word_report,
 )
-from utils.fetcher import BrowserFetcher
+from utils.fetcher import BrowserFetcher, fetch_text
 from utils.logger import setup_logging
 from utils.models import Article, SourceVerification, StructuredReport
 from utils.resolver import resolve_articles
@@ -57,7 +57,7 @@ async def scrape_source(
     try:
         if source["parser"] == "feed":
             feed_url = source.get("feed_url") or source["url"]
-            result = await fetcher.fetch(feed_url, settle=False)
+            result = await fetch_text(feed_url)  # feeds must be fetched over HTTP, not a browser
             articles = get_parser("feed")(source, keywords).parse(result.html)
             final_url = result.final_url
         else:
@@ -68,8 +68,13 @@ async def scrape_source(
             result = await fetcher.fetch(source["url"], wait_for_selector=source.get("wait_for_selector"))
             final_url = result.final_url
             articles = get_parser(source["parser"])(source, keywords).parse(result.html)
-            if discover_feeds:
-                articles = await _augment_with_feed(source, keywords, fetcher, result.html, final_url, articles)
+            # An explicit feed_url is always merged (reliable dates, bypasses
+            # nav-scraping); --discover-feeds additionally auto-discovers one.
+            feed_url = source.get("feed_url")
+            if not feed_url and discover_feeds:
+                feed_url = discover_feed_url(result.html, final_url)
+            if feed_url:
+                articles = await _merge_feed(source, keywords, feed_url, articles)
 
         return articles, SourceVerification(
             source_id=source_id,
@@ -89,17 +94,14 @@ async def scrape_source(
         )
 
 
-async def _augment_with_feed(source, keywords, fetcher, html, base, html_articles):
-    """If the page advertises an RSS/Atom feed, fold its items (which carry
-    reliable dates) into the HTML-scraped set, deduped by URL/title."""
-    feed_url = discover_feed_url(html, base)
-    if not feed_url:
-        return html_articles
+async def _merge_feed(source, keywords, feed_url, html_articles):
+    """Fold a feed's items (which carry reliable dates) into the HTML-scraped
+    set, deduped by URL/title."""
     try:
-        feed_result = await fetcher.fetch(feed_url, settle=False)
+        feed_result = await fetch_text(feed_url)  # HTTP, not browser (see fetch_text)
         feed_articles = get_parser("feed")(source, keywords).parse(feed_result.html)
     except Exception as exc:  # noqa: BLE001
-        logger.debug("Feed discovery failed for %s: %s", source["id"], exc)
+        logger.debug("Feed fetch failed for %s (%s): %s", source["id"], feed_url, exc)
         return html_articles
 
     by_key: dict[str, Article] = {}

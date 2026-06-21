@@ -35,6 +35,17 @@ class FeedParser(BaseParser):
             summary = _entry_summary(item)
             published_at = parse_article_date(_entry_date(item))
 
+            # Aggregator feeds (e.g. Google News) carry the real outlet in a
+            # <source> element and append " - Outlet" to the title. Surface the
+            # real outlet so the report cites it, not the aggregator.
+            outlet = item.find("source")
+            source_name = self.source["name"]
+            if outlet and outlet.get_text(strip=True):
+                source_name = outlet.get_text(strip=True)
+                suffix = f" - {source_name}"
+                if title.endswith(suffix):
+                    title = title[: -len(suffix)].strip()
+
             matched = match_keywords(f"{title} {summary}", self.keywords)
             if self.source.get("require_keyword_match", True) and not matched:
                 continue
@@ -42,7 +53,7 @@ class FeedParser(BaseParser):
             articles.append(
                 Article(
                     source_id=self.source["id"],
-                    source_name=self.source["name"],
+                    source_name=source_name,
                     language=self.source["language"],
                     country_focus=self.source.get("country_focus", "Libya"),
                     title=title,
