@@ -530,7 +530,7 @@
       "url": "https://www.aa.com.tr/en/search?s=libya",
       "parser": "generic_list",
       "enabled": true,
-      "require_keyword_match": false,
+      "require_keyword_match": true,
       "selectors": {
         "article": "a[class*=\"flex-col\"], article, .post",
         "title": "h1, h2, h3, a",
@@ -538,7 +538,8 @@
         "summary": ".entry-summary, .td-excerpt, .excerpt, .post-excerpt, .summary, p",
         "date": "time, .entry-date, .date, .created, .post-date",
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
-      }
+      },
+      "feed": "https://www.aa.com.tr/en/rss/default?cat=africa"
     },
     {
       "id": "reuters",
@@ -594,6 +595,42 @@
         "section": ".category, .cat-links, .td-post-category, .post-category, .tag"
       },
       "feed": "https://www.aljazeera.net/feed"
+    },
+    {
+      "id": "google_news_en",
+      "name": "Google News",
+      "language": "en",
+      "url": "https://news.google.com/search?q=Libya",
+      "feed": "https://news.google.com/rss/search?q=Libya&hl=en-US&gl=US&ceid=US:en",
+      "parser": "feed_list",
+      "enabled": true,
+      "country_focus": "Libya",
+      "require_keyword_match": true,
+      "per_item_source": true,
+      "autodiscover_feed": false,
+      "selectors": {
+        "article": "article",
+        "title": "a",
+        "url": "a"
+      }
+    },
+    {
+      "id": "google_news_ar",
+      "name": "Google News",
+      "language": "ar",
+      "url": "https://news.google.com/search?q=%D9%84%D9%8A%D8%A8%D9%8A%D8%A7",
+      "feed": "https://news.google.com/rss/search?q=%D9%84%D9%8A%D8%A8%D9%8A%D8%A7&hl=ar&gl=LY&ceid=LY:ar",
+      "parser": "feed_list",
+      "enabled": true,
+      "country_focus": "Libya",
+      "require_keyword_match": true,
+      "per_item_source": true,
+      "autodiscover_feed": false,
+      "selectors": {
+        "article": "article",
+        "title": "a",
+        "url": "a"
+      }
     }
   ]
 }

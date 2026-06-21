@@ -31,6 +31,21 @@ from utils.cleaning import is_boilerplate_title, normalize
 
 _SECTION_SET = {normalize(name) for name in taxonomy.SECTION_ORDER}
 _ARABIC_RE = re.compile(r"[؀-ۿ]")
+_PAREN_RE = re.compile(r"\([^)]*\)")
+_LANG_TAG_RE = re.compile(r"\((?:arabic|english|عربي|عربى)\)", re.IGNORECASE)
+
+
+def canonical_source(name: str) -> str:
+    """Match-key for an outlet name: drop parentheticals (e.g. '(English)'),
+    unify hyphens/apostrophes and a leading 'the', collapse whitespace.
+
+    Lets 'Asharq Al-Awsat', 'Asharq Al Awsat' and 'The New Arab (English)'
+    compare equal across reports that label outlets slightly differently.
+    """
+    text = normalize(name)
+    text = _PAREN_RE.sub(" ", text).replace("-", " ").replace("’", "'").replace("`", "'")
+    text = re.sub(r"^the\s+", "", text)
+    return re.sub(r"\s+", " ", text).strip()
 _ROLE_PREFIX_RE = re.compile(r"^\s*\[[^\]]+\]")
 # Source citations are joined by " / "; the source block follows the last
 # en/em dash. e.g. "Headline text – Source A / Source B (Arabic)".
@@ -66,7 +81,7 @@ class ParsedReport:
     sections: list[str] = field(default_factory=list)  # in document order
 
     def source_names(self) -> set[str]:
-        return {normalize(name) for bullet in self.bullets for name, _ in bullet.sources}
+        return {canonical_source(name) for bullet in self.bullets for name, _ in bullet.sources}
 
 
 def _split_sources(source_blob: str) -> list[tuple[str, str]]:
@@ -75,11 +90,12 @@ def _split_sources(source_blob: str) -> list[tuple[str, str]]:
         name = piece.strip()
         if not name:
             continue
-        language = "en"
-        if "(Arabic)" in name:
-            language = "ar"
-            name = name.replace("(Arabic)", "").strip()
-        sources.append((name, language))
+        # Some reports tag English outlets too (e.g. "Libya Herald (English)");
+        # the language is the tag, the stored name drops any language tag.
+        language = "ar" if re.search(r"\(arabic\)", name, re.IGNORECASE) else "en"
+        name = _LANG_TAG_RE.sub("", name).strip()
+        if name:
+            sources.append((name, language))
     return sources
 
 
@@ -207,28 +223,50 @@ def _ratio_score(value: float, target: float) -> float:
     return max(0.0, min(1.0, value / target))
 
 
-def coverage_recall(target: ParsedReport, gold: ParsedReport) -> dict:
+def coverage_recall(
+    target: ParsedReport,
+    gold: ParsedReport,
+    monitored: set[str] | None = None,
+) -> dict:
     """Source-name recall of the target against a date-matched gold report.
 
     Source labels are rendered in English in both reports (e.g. 'Al Menassa
     (Arabic)'), so this works even when the target's headlines are untranslated.
+
+    Raw recall is unfair: gold cites many one-off wires (AP, ABC, …) that the
+    pipeline never monitors, so a perfect report can only ever reach a ceiling
+    of ``gold ∩ monitored``. When ``monitored`` (the configured source names) is
+    supplied we also report ``ceiling_recall`` — recall against the achievable
+    set — which is what scoring should use.
     """
     gold_sources = gold.source_names()
     target_sources = target.source_names()
     hit = gold_sources & target_sources
-    return {
+    result = {
         "gold_sources": len(gold_sources),
         "matched_sources": len(hit),
         "source_recall": len(hit) / max(len(gold_sources), 1),
         "missing_sources": sorted(gold_sources - target_sources),
         "bullet_ratio": len(target.bullets) / max(len(gold.bullets), 1),
     }
+    if monitored is not None:
+        monitored_canon = {canonical_source(name) for name in monitored}
+        achievable = gold_sources & monitored_canon
+        achievable_hit = achievable & target_sources
+        result.update(
+            achievable_sources=len(achievable),
+            unmonitored_gold=len(gold_sources - monitored_canon),
+            ceiling_recall=len(achievable_hit) / max(len(achievable), 1),
+            missing_monitored=sorted(achievable - target_sources),
+        )
+    return result
 
 
 def score_report(
     report: ParsedReport,
     profile: GoldProfile,
     gold: ParsedReport | None = None,
+    monitored: set[str] | None = None,
 ) -> dict:
     """Produce a 0-100 scorecard with a transparent component breakdown."""
     m = report_metrics(report)
@@ -267,10 +305,11 @@ def score_report(
 
     coverage = None
     if gold is not None:
-        coverage = coverage_recall(report, gold)
-        cov_recall_pts = 100 * coverage["source_recall"]
-        cov_volume_pts = 100 * min(1.0, coverage["bullet_ratio"])
-        components["coverage"] = round(statistics.mean([cov_recall_pts, cov_volume_pts]), 1)
+        coverage = coverage_recall(report, gold, monitored=monitored)
+        # Score against the achievable ceiling (gold ∩ monitored sources) when
+        # we know the source list; otherwise fall back to raw recall.
+        recall = coverage.get("ceiling_recall", coverage["source_recall"])
+        components["coverage"] = round(100 * recall, 1)
         total = 0.4 * structure + 0.35 * style + 0.25 * components["coverage"]
     else:
         total = 0.55 * structure + 0.45 * style

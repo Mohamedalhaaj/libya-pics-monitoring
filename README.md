@@ -8,6 +8,9 @@ Python media monitoring system for collecting Libya-related headlines from appro
   from the feed (clean titles, real publication dates, and it reaches several
   bot-protected outlets the headless browser could not). Falls back to HTML
   automatically when a feed is missing, empty, or fails.
+- **Wire recovery via Google News**: `per_item_source` meta-feeds pull in the
+  one-off wires the gold reports cite (Reuters, AP, ABC, Anadolu, allAfrica, …),
+  attributing each item to its originating outlet rather than the aggregator.
 - Playwright-based page collection for static and JavaScript-rendered sites
 - **Structural noise filtering**: navigation, headers, footers, sidebars,
   social bars, category chips and pagination are stripped before parsing so
@@ -188,10 +191,12 @@ The 0-100 total combines three components:
   attributed, zero boilerplate noise.
 - **style conformance** — English ratio, cross-source dedup rate, role-prefix
   usage and bullet volume, measured against the gold profile.
-- **coverage** *(only with `--gold`)* — share of the gold report's cited outlets
-  present in the target. 100% is not expected: gold reports include one-off wire
-  pickups (AP, Reuters, ABC, …) outside the monitored source list; use it to
-  track the trend, not as an absolute target.
+- **coverage** *(only with `--gold`)* — **ceiling recall**: of the gold report's
+  outlets that are *also* in the monitored source list (`--sources`, default
+  `sources.json`), how many the target cites. This excludes gold's one-off wires
+  outside the source list from the denominator, so the score reflects report
+  quality rather than the source roster. Raw recall and the list of
+  monitored-but-missed outlets are still shown, to point at real coverage gaps.
 
 A gold sample scores ~100; an untranslated DRAFT scores high on structure but
 low on style until Claude enrichment runs. Pass `--llm-judge` (needs an API key
@@ -209,6 +214,10 @@ Sources are managed in `sources.json`. Each enabled source defines:
   the HTML page; the collector falls back to `url` if the feed is empty/fails.
 - `autodiscover_feed` *(optional, default `true`)*: when no `feed` is set, look
   for a feed advertised by the page's `<link rel="alternate">` and use it.
+- `per_item_source` *(optional, default `false`)*: for aggregator feeds (Google
+  News), cite each item's originating outlet (from the feed's `<source>` tag)
+  instead of the configured source name, and strip the trailing `- Publisher`
+  from the headline.
 - `min_title_words` *(optional, default `4`)*: HTML items whose title has fewer
   words are treated as navigation chrome and dropped.
 - `parser`: parser implementation, currently `generic_list` (HTML) or

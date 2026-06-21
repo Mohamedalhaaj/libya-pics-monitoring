@@ -36,6 +36,28 @@ def _entry_section(entry) -> str:
     return _clean(entry.get("category", ""))
 
 
+def _entry_source_title(entry) -> str:
+    """The originating outlet, for aggregator feeds (e.g. Google News)."""
+    source = entry.get("source")
+    if not source:
+        return ""
+    title = source.get("title") if isinstance(source, dict) else getattr(source, "title", "")
+    # "ABC News - Breaking News, Latest News and Videos" -> "ABC News".
+    name = _clean(title or "")
+    for separator in (" - ", " | ", " — "):
+        if separator in name:
+            name = name.split(separator, 1)[0]
+    return name.strip()
+
+
+def _strip_trailing_source(title: str, source_name: str) -> str:
+    """Google News appends ' - Publisher' to each headline; drop it."""
+    parts = title.rsplit(" - ", 1)
+    if len(parts) == 2 and len(parts[1]) <= 40:
+        return parts[0].strip()
+    return title
+
+
 class FeedListParser(BaseParser):
     """Parse an RSS/Atom feed body into Article records.
 
@@ -48,6 +70,9 @@ class FeedListParser(BaseParser):
     def parse(self, feed_text: str) -> list[Article]:
         parsed = feedparser.parse(feed_text)
         require_keyword = self.source.get("require_keyword_match", True)
+        # Aggregator feeds (Google News) carry the real outlet per item; use it
+        # so the report cites "Reuters"/"ABC News", not the aggregator name.
+        per_item_source = self.source.get("per_item_source", False)
         articles: list[Article] = []
 
         for entry in parsed.entries:
@@ -57,6 +82,13 @@ class FeedListParser(BaseParser):
             url = (entry.get("link") or "").strip()
             summary = _clean(entry.get("summary", entry.get("description", "")))
 
+            source_name = self.source["name"]
+            if per_item_source:
+                outlet = _entry_source_title(entry)
+                if outlet:
+                    source_name = outlet
+                    title = _strip_trailing_source(title, outlet)
+
             matched_keywords = match_keywords(f"{title} {summary}", self.keywords)
             if require_keyword and not matched_keywords:
                 continue
@@ -64,7 +96,7 @@ class FeedListParser(BaseParser):
             articles.append(
                 Article(
                     source_id=self.source["id"],
-                    source_name=self.source["name"],
+                    source_name=source_name,
                     language=self.source["language"],
                     country_focus=self.source.get("country_focus", "Libya"),
                     title=title,

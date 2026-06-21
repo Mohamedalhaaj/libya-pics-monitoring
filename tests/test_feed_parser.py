@@ -63,6 +63,37 @@ def test_feed_parses_titles_dates_summaries():
     assert (first.published_at.year, first.published_at.month, first.published_at.day) == (2026, 6, 20)
 
 
+GNEWS_RSS = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Google News</title>
+  <item>
+    <title>At least 15 migrant bodies wash ashore in eastern Libya - Reuters</title>
+    <link>https://news.google.com/rss/articles/abc123</link>
+    <pubDate>Fri, 20 Jun 2026 09:30:00 +0000</pubDate>
+    <source url="https://www.reuters.com">Reuters</source>
+  </item>
+  <item>
+    <title>A boat with migrants capsized north off Libya - ABC News</title>
+    <link>https://news.google.com/rss/articles/def456</link>
+    <pubDate>Fri, 20 Jun 2026 08:00:00 +0000</pubDate>
+    <source url="https://abcnews.go.com">ABC News - Breaking News, Latest News and Videos</source>
+  </item>
+</channel></rss>
+"""
+
+
+def test_per_item_source_uses_real_outlet():
+    # Aggregator feed (Google News): cite the originating outlet, not "Google News".
+    source = {**BASE_SOURCE, "name": "Google News", "require_keyword_match": True,
+              "per_item_source": True}
+    articles = FeedListParser(source, KEYWORDS).parse(GNEWS_RSS)
+    assert {a.source_name for a in articles} == {"Reuters", "ABC News"}
+    # The trailing " - Publisher" is stripped from the headline.
+    assert articles[0].title == "At least 15 migrant bodies wash ashore in eastern Libya"
+    # Long publisher boilerplate is shortened to the outlet name.
+    assert articles[1].source_name == "ABC News"
+
+
 def test_keyword_filter_drops_offtopic_items():
     # Broad/site-wide feeds set require_keyword_match to filter to Libya items.
     source = {**BASE_SOURCE, "require_keyword_match": True}

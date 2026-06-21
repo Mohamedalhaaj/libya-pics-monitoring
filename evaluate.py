@@ -19,6 +19,7 @@ import argparse
 import json
 from pathlib import Path
 
+from utils.config import load_sources
 from utils.report_eval import (
     JudgeUnavailable,
     build_gold_profile,
@@ -67,12 +68,18 @@ def print_scorecard(card: dict, profile) -> None:
     cov = card.get("coverage")
     if cov:
         print("\n  coverage vs gold:")
-        print(f"    source recall ........ {cov['source_recall']:.0%}  "
-              f"({cov['matched_sources']}/{cov['gold_sources']} outlets)")
+        if "ceiling_recall" in cov:
+            print(f"    ceiling recall ....... {cov['ceiling_recall']:.0%}  "
+                  f"({cov['matched_sources']}/{cov['achievable_sources']} monitored outlets gold also used)")
+            print(f"    raw recall ........... {cov['source_recall']:.0%}  "
+                  f"({cov['matched_sources']}/{cov['gold_sources']}; "
+                  f"{cov['unmonitored_gold']} gold outlets are not monitored)")
+            if cov["missing_monitored"]:
+                print(f"    monitored & missed ... {', '.join(cov['missing_monitored'][:10])}")
+        else:
+            print(f"    source recall ........ {cov['source_recall']:.0%}  "
+                  f"({cov['matched_sources']}/{cov['gold_sources']} outlets)")
         print(f"    bullet ratio ......... {cov['bullet_ratio']:.2f}")
-        if cov["missing_sources"]:
-            preview = ", ".join(cov["missing_sources"][:8])
-            print(f"    missing outlets ...... {preview}")
 
 
 def main() -> None:
@@ -80,6 +87,8 @@ def main() -> None:
     parser.add_argument("target", nargs="?", default=DEFAULT_TARGET, help="Report .docx to score.")
     parser.add_argument("--samples", default="samples", help="Directory of gold reports.")
     parser.add_argument("--gold", help="Date-matched gold .docx for source-coverage recall.")
+    parser.add_argument("--sources", default="sources.json",
+                        help="Source config; its outlet names define the achievable coverage ceiling.")
     parser.add_argument("--profile", action="store_true", help="Print the gold profile and exit.")
     parser.add_argument("--llm-judge", action="store_true", help="Add qualitative LLM scores (needs API credit).")
     parser.add_argument("--json", dest="json_out", help="Write the scorecard JSON to this path.")
@@ -90,9 +99,16 @@ def main() -> None:
         print_profile(profile)
         return
 
+    monitored = None
+    if args.gold:
+        try:
+            monitored = {s["name"] for s in load_sources(args.sources)}
+        except Exception:
+            monitored = None  # no source config -> fall back to raw recall
+
     report = parse_pics_report(args.target)
     gold = parse_pics_report(args.gold) if args.gold else None
-    card = score_report(report, profile, gold=gold)
+    card = score_report(report, profile, gold=gold, monitored=monitored)
 
     if args.llm_judge and gold is not None:
         try:

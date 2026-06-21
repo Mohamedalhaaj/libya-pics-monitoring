@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from docx import Document  # noqa: E402
 
 from utils.report_eval import (  # noqa: E402
+    canonical_source,
     coverage_recall,
     parse_pics_report,
     report_metrics,
@@ -91,6 +92,32 @@ def test_coverage_recall_and_english_detection():
         assert cov["matched_sources"] == 3
         assert abs(cov["source_recall"] - 0.6) < 1e-6
         assert "anadolu agency" in cov["missing_sources"]
+
+
+def test_canonical_source_matching():
+    # Naming variants that should compare equal across reports.
+    assert canonical_source("Asharq Al-Awsat") == canonical_source("Asharq Al Awsat")
+    assert canonical_source("Libya Herald (English)") == canonical_source("Libya Herald")
+    assert canonical_source("The New Arab (English)") == canonical_source("New Arab")
+
+
+def test_ceiling_recall_vs_monitored():
+    with tempfile.TemporaryDirectory() as tmp:
+        gpath, cpath = Path(tmp) / "g.docx", Path(tmp) / "c.docx"
+        _write_report(gpath, GOLD, "Libya News Headlines – 18-21 June")
+        _write_report(cpath, CANDIDATE, "Libya News Headlines – 18-21 June")
+        gold = parse_pics_report(gpath)
+        cand = parse_pics_report(cpath)
+
+        # Gold cites 5 outlets; we only "monitor" 3 of them. The candidate cites
+        # all 3 monitored ones -> ceiling recall 100% even though raw recall 60%.
+        monitored = {"UN News", "Al Marsad", "Libya Observer"}
+        cov = coverage_recall(cand, gold, monitored=monitored)
+        assert cov["achievable_sources"] == 3
+        assert cov["unmonitored_gold"] == 2  # anadolu agency, al wasat
+        assert abs(cov["ceiling_recall"] - 1.0) < 1e-6
+        assert abs(cov["source_recall"] - 0.6) < 1e-6
+        assert cov["missing_monitored"] == []
 
 
 if __name__ == "__main__":
