@@ -40,9 +40,10 @@ to a `D-D Month` range; a single day is just `D Month`).
    Tetteh/Koury, Security Council, UN agencies, international mediation,
    humanitarian agencies) are combined when identical but kept even if repeated.
 5. **Attribution format.** End each bullet with ` – ` then the outlets joined by
-   ` / `. Append ` (Arabic)` to Arabic-language outlets. English outlets first
-   where natural. Example:
-   `At least 15 migrant bodies wash ashore in eastern Libya – Reuters / New Arab / Shafaq`
+   ` / `. Append ` (Arabic)` **only** to Arabic-language outlets (the `language`
+   column is `ar`); **never tag English outlets** — write `Reuters`, not
+   `Reuters (English)`. English outlets first where natural. Example:
+   `At least 15 migrant bodies wash ashore in eastern Libya – Reuters / New Arab / Shafaq (Arabic)`
 6. **Role/title prefixes.** When a bullet reports a named person's statement,
    prefix their role in square brackets, e.g.
    `[HoR Member] Jehani: the General Command's support gives the US initiative momentum`,
@@ -51,7 +52,9 @@ to a `D-D Month` range; a single day is just `D Month`).
 
 ## Structure
 
-Use this exact main section order; omit a section only if it has no items:
+Use this exact main section order; omit a section only if it has no items. **Each
+main section appears at most once** — group all of its bullets and subsections
+under a single heading; never emit the same section heading twice.
 
 1. United Nations
 2. Politics

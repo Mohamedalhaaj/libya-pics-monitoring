@@ -82,6 +82,24 @@ GNEWS_RSS = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+GNEWS_ALIAS_RSS = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>الوسط: ليبيا توقّع عقود استكشاف نفطية - بوابة الوسط</title>
+    <link>https://news.google.com/rss/articles/w1</link>
+    <pubDate>Fri, 20 Jun 2026 09:30:00 +0000</pubDate>
+    <source url="https://alwasat.ly">بوابة الوسط</source>
+  </item>
+  <item>
+    <title>Libya peace process regains momentum - allAfrica.com</title>
+    <link>https://news.google.com/rss/articles/w2</link>
+    <pubDate>Fri, 20 Jun 2026 08:00:00 +0000</pubDate>
+    <source url="https://allafrica.com">allAfrica.com</source>
+  </item>
+</channel></rss>
+"""
+
+
 def test_per_item_source_uses_real_outlet():
     # Aggregator feed (Google News): cite the originating outlet, not "Google News".
     source = {**BASE_SOURCE, "name": "Google News", "require_keyword_match": True,
@@ -92,6 +110,17 @@ def test_per_item_source_uses_real_outlet():
     assert articles[0].title == "At least 15 migrant bodies wash ashore in eastern Libya"
     # Long publisher boilerplate is shortened to the outlet name.
     assert articles[1].source_name == "ABC News"
+
+
+def test_per_item_source_canonicalises_outlet_names():
+    # require_keyword_match False to isolate alias mapping from keyword filtering.
+    source = {**BASE_SOURCE, "name": "Google News", "language": "ar",
+              "require_keyword_match": False, "per_item_source": True}
+    arts = FeedListParser(source, KEYWORDS).parse(GNEWS_ALIAS_RSS)
+    names = {a.source_name for a in arts}
+    # Arabic publisher mapped to the gold English label; ".com" variant too.
+    assert "Al Wasat" in names
+    assert "all Africa" in names
 
 
 def test_keyword_filter_drops_offtopic_items():

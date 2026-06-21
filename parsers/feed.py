@@ -10,6 +10,7 @@ import feedparser
 from parsers.base import BaseParser
 from parsers.generic import deduplicate_articles, match_keywords
 from utils.models import Article
+from utils.outlets import canonicalize_outlet
 
 _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -86,8 +87,10 @@ class FeedListParser(BaseParser):
             if per_item_source:
                 outlet = _entry_source_title(entry)
                 if outlet:
-                    source_name = outlet
                     title = _strip_trailing_source(title, outlet)
+                    # Normalise the publisher to the gold report's label so
+                    # attribution and cross-source dedup line up.
+                    source_name = canonicalize_outlet(outlet)
 
             matched_keywords = match_keywords(f"{title} {summary}", self.keywords)
             if require_keyword and not matched_keywords:
