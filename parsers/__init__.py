@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from parsers.base import BaseParser
+from parsers.feed import FeedParser
 from parsers.generic import GenericListParser
 
 
 PARSERS: dict[str, type[BaseParser]] = {
     "generic_list": GenericListParser,
+    "feed": FeedParser,
 }
 
 

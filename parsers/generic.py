@@ -57,6 +57,9 @@ class GenericListParser(BaseParser):
                 if section_node:
                     section = section_node.get_text(" ", strip=True)
 
+            if _is_noise(title, url):
+                continue
+
             matched_keywords = match_keywords(f"{title} {summary}", self.keywords)
             if self.source.get("require_keyword_match", True) and not matched_keywords:
                 continue
@@ -77,6 +80,29 @@ class GenericListParser(BaseParser):
             )
 
         return deduplicate_articles(articles)
+
+
+# Common chrome/navigation labels that the broad `li`/`a` selectors pick up.
+_NAV_LABELS = {
+    "terms & conditions", "privacy policy", "fact-checking policy", "about us",
+    "contact us", "newsletter", "subscribe", "sign in", "log in", "read more",
+    "entertainment", "sports", "politics", "economy", "home", "menu",
+    "صحافة المواطن", "الرئيسية", "اتصل بنا", "من نحن", "سياسة الخصوصية",
+    "شروط الاستخدام", "اقتصاد", "رياضة", "سياسة", "منوعات", "أخبار ليبيا",
+    "فيديو", "مقالات", "عربى", "عربي ودولي", "الأخبار الاقتصادية",
+}
+
+
+def _is_noise(title: str, url: str) -> bool:
+    """Filter out navigation/boilerplate cards the broad selectors capture."""
+    stripped = title.strip()
+    if _normalize(stripped) in _NAV_LABELS:
+        return True
+    # A real headline either links somewhere or is a full sentence; a short,
+    # link-less fragment is almost always chrome.
+    if not url and len(stripped) < 25:
+        return True
+    return False
 
 
 def _normalize(text: str) -> str:

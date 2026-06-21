@@ -18,12 +18,21 @@ Python media monitoring system for collecting Libya-related headlines from appro
 
 ## How it works
 
-The pipeline has two stages:
+The pipeline has three stages:
 
-1. **Collection** — Playwright + BeautifulSoup scrape candidate headlines from
-   the approved sources and write `libya_media_headlines.csv` and the source
-   verification table.
-2. **Editorial enrichment** — the collected articles are sent to the Claude API
+1. **Collection** (concurrent) — for each source the scraper fetches the listing
+   page (Playwright + BeautifulSoup) and, with `--discover-feeds`, also folds in
+   the source's advertised RSS/Atom feed. Feeds are the most reliable path: they
+   carry clean titles, links and dates, and bypass both bot protection and
+   client-side rendering. Sources can also be configured with `"parser": "feed"`
+   and a `feed_url` to use a feed directly.
+2. **Date resolution** — listing pages rarely expose a trustworthy date, so when
+   a date window is requested (or `--resolve-dates` is passed) the scraper opens
+   each kept article's page and reads its real `article:published_time` /
+   JSON-LD date (`utils/resolver.py`). Only then is the date window applied — so
+   the report can be limited to exactly the requested dates without a manual
+   link-check.
+3. **Editorial enrichment** — the collected articles are sent to the Claude API
    (`utils/enrich.py`), which translates Arabic headlines to English, sorts them
    into the fixed 8-section taxonomy, and merges the same story reported by
    multiple outlets into one bullet citing every source. The result is rendered
@@ -48,12 +57,16 @@ rules and [`samples/`](samples) for reference output products.
 ├── parsers/
 │   ├── __init__.py
 │   ├── base.py
+│   ├── feed.py
 │   └── generic.py
 └── utils/
     ├── config.py
     ├── dates.py
+    ├── enrich.py
     ├── exports.py
     ├── fetcher.py
+    ├── resolver.py
+    ├── taxonomy.py
     ├── logger.py
     └── models.py
 ```
@@ -80,6 +93,18 @@ Run the monitor for a specific date range:
 ```bash
 python scraper.py --start-date 2026-06-01 --end-date 2026-06-03
 ```
+
+Recommended full run (feeds for reliability + precise per-article dates; a date
+window auto-enables date resolution):
+
+```bash
+python scraper.py --start-date 2026-06-18 --end-date 2026-06-21 \
+  --discover-feeds --report-date "18–21 June 2026"
+```
+
+Tuning knobs: `--concurrency N` (parallel fetches; auto = 6 headless / 2 over
+CDP), `--resolve-dates` (force per-article date lookup even without a window),
+`--discover-feeds` (also pull each source's RSS/Atom feed).
 
 Set the report title date, choose a model, or skip enrichment entirely:
 

@@ -87,7 +87,12 @@ class BrowserFetcher:
         if self._playwright:
             await self._playwright.stop()
 
-    async def fetch(self, url: str, wait_for_selector: str | None = None) -> FetchResult:
+    async def fetch(
+        self,
+        url: str,
+        wait_for_selector: str | None = None,
+        settle: bool = True,
+    ) -> FetchResult:
         if not self._context:
             raise RuntimeError("BrowserFetcher must be used as an async context manager")
 
@@ -100,15 +105,17 @@ class BrowserFetcher:
                 await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_ms)
                 if wait_for_selector:
                     await page.wait_for_selector(wait_for_selector, timeout=self.timeout_ms)
-                # Many sources render their article list client-side. The
-                # configured selector is often a generic tag (e.g. `li`) that
-                # already exists in the static shell, so the wait above can
-                # resolve before the list populates. Give the network a short,
-                # best-effort chance to settle so JS-rendered cards are present.
-                try:
-                    await page.wait_for_load_state("networkidle", timeout=min(self.timeout_ms, 8000))
-                except Exception:
-                    pass
+                # Many listing pages render client-side, so the configured
+                # selector is often a generic tag (e.g. `li`) that already exists
+                # in the static shell; the wait above can resolve before the list
+                # populates. Give the network a short, best-effort chance to
+                # settle. `settle=False` skips this for article pages, whose
+                # metadata (publish date) is in the initial server-rendered HTML.
+                if settle:
+                    try:
+                        await page.wait_for_load_state("networkidle", timeout=min(self.timeout_ms, 8000))
+                    except Exception:
+                        pass
                 html = await page.content()
                 return FetchResult(url=url, html=html, final_url=page.url)
             except Exception as exc:  # Playwright raises several transport-specific subclasses.

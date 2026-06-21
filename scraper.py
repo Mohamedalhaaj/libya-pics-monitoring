@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import date, datetime
 
 from parsers import get_parser
+from parsers.feed import discover_feed_url
 from utils.config import load_sources
 from utils.dates import in_date_range, parse_cli_date
 from utils.enrich import EnrichmentUnavailable, enrich_report
@@ -21,6 +22,7 @@ from utils.exports import (
 from utils.fetcher import BrowserFetcher
 from utils.logger import setup_logging
 from utils.models import Article, SourceVerification, StructuredReport
+from utils.resolver import resolve_articles
 
 logger = logging.getLogger(__name__)
 
@@ -46,32 +48,33 @@ async def scrape_source(
     source: dict,
     fetcher: BrowserFetcher,
     keywords: list[str],
-    start_date,
-    end_date,
-    keep_undated: bool,
+    discover_feeds: bool = False,
 ) -> tuple[list[Article], SourceVerification]:
+    """Collect articles for one source. Date filtering happens later, after the
+    article-page resolver fills in reliable dates."""
     source_id = source["id"]
     logger.info("Collecting source=%s url=%s", source_id, source["url"])
     try:
-        # Only wait on an explicit, specific selector. Passing the generic
-        # article selector (which matches dozens of `li` elements) made
-        # Playwright log floods and could crash the driver, so rely on the
-        # fetcher's networkidle settle for JS-rendered lists instead.
-        result = await fetcher.fetch(
-            source["url"],
-            wait_for_selector=source.get("wait_for_selector"),
-        )
-        parser_cls = get_parser(source["parser"])
-        parser = parser_cls(source, keywords)
-        articles = [
-            article
-            for article in parser.parse(result.html)
-            if in_date_range(article.published_at, start_date, end_date, keep_undated)
-        ]
+        if source["parser"] == "feed":
+            feed_url = source.get("feed_url") or source["url"]
+            result = await fetcher.fetch(feed_url, settle=False)
+            articles = get_parser("feed")(source, keywords).parse(result.html)
+            final_url = result.final_url
+        else:
+            # Only wait on an explicit, specific selector. Passing the generic
+            # article selector (which matches dozens of `li` elements) made
+            # Playwright log floods and could crash the driver, so rely on the
+            # fetcher's networkidle settle for JS-rendered lists instead.
+            result = await fetcher.fetch(source["url"], wait_for_selector=source.get("wait_for_selector"))
+            final_url = result.final_url
+            articles = get_parser(source["parser"])(source, keywords).parse(result.html)
+            if discover_feeds:
+                articles = await _augment_with_feed(source, keywords, fetcher, result.html, final_url, articles)
+
         return articles, SourceVerification(
             source_id=source_id,
             source_name=source["name"],
-            url=result.final_url,
+            url=final_url,
             status="ok",
             articles_found=len(articles),
         )
@@ -86,6 +89,31 @@ async def scrape_source(
         )
 
 
+async def _augment_with_feed(source, keywords, fetcher, html, base, html_articles):
+    """If the page advertises an RSS/Atom feed, fold its items (which carry
+    reliable dates) into the HTML-scraped set, deduped by URL/title."""
+    feed_url = discover_feed_url(html, base)
+    if not feed_url:
+        return html_articles
+    try:
+        feed_result = await fetcher.fetch(feed_url, settle=False)
+        feed_articles = get_parser("feed")(source, keywords).parse(feed_result.html)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Feed discovery failed for %s: %s", source["id"], exc)
+        return html_articles
+
+    by_key: dict[str, Article] = {}
+    for article in html_articles + feed_articles:
+        key = article.url or article.title
+        existing = by_key.get(key)
+        if existing is None:
+            by_key[key] = article
+        elif existing.published_at is None and article.published_at is not None:
+            by_key[key] = article  # prefer the copy that has a date
+    logger.info("Source %s: merged feed %s (+%s items)", source["id"], feed_url, len(feed_articles))
+    return list(by_key.values())
+
+
 async def run(args: argparse.Namespace) -> None:
     setup_logging(args.log_file, args.verbose)
     output_dir = ensure_output_dir(args.output_dir)
@@ -98,6 +126,12 @@ async def run(args: argparse.Namespace) -> None:
     all_articles: list[Article] = []
     verifications: list[SourceVerification] = []
 
+    # CDP drives the user's real browser; keep concurrency low there to avoid a
+    # storm of tabs. Headless can fan out freely.
+    concurrency = args.concurrency if args.concurrency else (2 if args.cdp_url else 6)
+    # A date window is only trustworthy with resolved per-article dates.
+    resolve_dates = args.resolve_dates or bool(start_date or end_date)
+
     async with BrowserFetcher(
         timeout_ms=args.timeout * 1000,
         retries=args.retries,
@@ -105,18 +139,27 @@ async def run(args: argparse.Namespace) -> None:
         headless=not args.show_browser,
         cdp_url=args.cdp_url,
     ) as fetcher:
-        for source in sources:
-            articles, verification = await scrape_source(
-                source=source,
-                fetcher=fetcher,
-                keywords=keywords,
-                start_date=start_date,
-                end_date=end_date,
-                keep_undated=args.keep_undated,
-            )
+        semaphore = asyncio.Semaphore(concurrency)
+
+        async def collect(source):
+            async with semaphore:
+                return await scrape_source(source, fetcher, keywords, discover_feeds=args.discover_feeds)
+
+        results = await asyncio.gather(*(collect(source) for source in sources))
+        for articles, verification in results:
             all_articles.extend(articles)
             verifications.append(verification)
 
+        if resolve_dates:
+            undated = [a for a in all_articles if a.published_at is None and a.url]
+            if undated:
+                await resolve_articles(fetcher, undated, concurrency=concurrency)
+
+    # Apply the date window now that dates are as reliable as we can make them.
+    all_articles = [
+        a for a in all_articles
+        if in_date_range(a.published_at, start_date, end_date, args.keep_undated)
+    ]
     all_articles.sort(key=lambda article: article.published_at or datetime.min, reverse=True)
 
     report_date = format_report_date(args.report_date, end_date)
@@ -188,6 +231,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--keep-undated", action="store_true", help="Keep articles where the source does not expose a date.")
     parser.add_argument("--timeout", type=int, default=30, help="Browser timeout per page in seconds.")
     parser.add_argument("--retries", type=int, default=3, help="Fetch retry attempts per source.")
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=0,
+        help="Parallel fetches (0 = auto: 6 headless, 2 over CDP).",
+    )
+    parser.add_argument(
+        "--resolve-dates",
+        action="store_true",
+        help="Fetch article pages to read precise publish dates (auto-on with a date window).",
+    )
+    parser.add_argument(
+        "--discover-feeds",
+        action="store_true",
+        help="Also pull each source's advertised RSS/Atom feed (reliable dates, bypasses bot/JS).",
+    )
     parser.add_argument("--retry-delay", type=float, default=2.0, help="Base retry delay in seconds.")
     parser.add_argument("--show-browser", action="store_true", help="Run Playwright with a visible browser.")
     parser.add_argument(

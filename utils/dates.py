@@ -42,15 +42,21 @@ def parse_article_date(value: str | None) -> datetime | None:
 
 
 def parse_date_from_url(url: str | None) -> datetime | None:
-    """Best-effort date from a date-stamped article URL (day defaults to 1)."""
+    """Best-effort date from a date-stamped article URL.
+
+    Only trusted when the URL carries a full year/month/day. Month-only URLs
+    (e.g. WordPress /2026/06/slug) are treated as undated rather than guessing
+    the 1st — guessing produced confidently-wrong dates that wrongly excluded
+    in-window articles. Use the article-page resolver to date those precisely.
+    """
     if not url:
         return None
     match = _URL_DATE_RE.search(url)
-    if not match:
+    if not match or not match.group(3):
         return None
     year, month, day = match.group(1), match.group(2), match.group(3)
     try:
-        return datetime(int(year), int(month), int(day) if day else 1)
+        return datetime(int(year), int(month), int(day))
     except ValueError:
         return None
 
