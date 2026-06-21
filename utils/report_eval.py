@@ -255,6 +255,7 @@ def coverage_recall(
         achievable_hit = achievable & target_sources
         result.update(
             achievable_sources=len(achievable),
+            achievable_matched=len(achievable_hit),
             unmonitored_gold=len(gold_sources - monitored_canon),
             ceiling_recall=len(achievable_hit) / max(len(achievable), 1),
             missing_monitored=sorted(achievable - target_sources),

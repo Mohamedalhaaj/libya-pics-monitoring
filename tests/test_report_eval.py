@@ -114,6 +114,7 @@ def test_ceiling_recall_vs_monitored():
         monitored = {"UN News", "Al Marsad", "Libya Observer"}
         cov = coverage_recall(cand, gold, monitored=monitored)
         assert cov["achievable_sources"] == 3
+        assert cov["achievable_matched"] == 3
         assert cov["unmonitored_gold"] == 2  # anadolu agency, al wasat
         assert abs(cov["ceiling_recall"] - 1.0) < 1e-6
         assert abs(cov["source_recall"] - 0.6) < 1e-6

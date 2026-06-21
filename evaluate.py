@@ -16,6 +16,7 @@ Examples
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from pathlib import Path
 
@@ -70,12 +71,12 @@ def print_scorecard(card: dict, profile) -> None:
         print("\n  coverage vs gold:")
         if "ceiling_recall" in cov:
             print(f"    ceiling recall ....... {cov['ceiling_recall']:.0%}  "
-                  f"({cov['matched_sources']}/{cov['achievable_sources']} monitored outlets gold also used)")
+                  f"({cov['achievable_matched']}/{cov['achievable_sources']} of the gold outlets present in the collected data)")
             print(f"    raw recall ........... {cov['source_recall']:.0%}  "
                   f"({cov['matched_sources']}/{cov['gold_sources']}; "
-                  f"{cov['unmonitored_gold']} gold outlets are not monitored)")
+                  f"{cov['unmonitored_gold']} gold outlets were not in the data)")
             if cov["missing_monitored"]:
-                print(f"    monitored & missed ... {', '.join(cov['missing_monitored'][:10])}")
+                print(f"    available & missed ... {', '.join(cov['missing_monitored'][:12])}")
         else:
             print(f"    source recall ........ {cov['source_recall']:.0%}  "
                   f"({cov['matched_sources']}/{cov['gold_sources']} outlets)")
@@ -87,8 +88,10 @@ def main() -> None:
     parser.add_argument("target", nargs="?", default=DEFAULT_TARGET, help="Report .docx to score.")
     parser.add_argument("--samples", default="samples", help="Directory of gold reports.")
     parser.add_argument("--gold", help="Date-matched gold .docx for source-coverage recall.")
+    parser.add_argument("--collected", default="output/libya_media_headlines.csv",
+                        help="Collected articles CSV; its outlets define the achievable coverage ceiling.")
     parser.add_argument("--sources", default="sources.json",
-                        help="Source config; its outlet names define the achievable coverage ceiling.")
+                        help="Fallback source config when the collected CSV is absent.")
     parser.add_argument("--profile", action="store_true", help="Print the gold profile and exit.")
     parser.add_argument("--llm-judge", action="store_true", help="Add qualitative LLM scores (needs API credit).")
     parser.add_argument("--json", dest="json_out", help="Write the scorecard JSON to this path.")
@@ -101,10 +104,16 @@ def main() -> None:
 
     monitored = None
     if args.gold:
-        try:
-            monitored = {s["name"] for s in load_sources(args.sources)}
-        except Exception:
-            monitored = None  # no source config -> fall back to raw recall
+        # The achievable ceiling is the outlets actually present in the collected
+        # data the report was built from; fall back to configured source names.
+        if Path(args.collected).exists():
+            with open(args.collected, encoding="utf-8-sig") as handle:
+                monitored = {row["source_name"] for row in csv.DictReader(handle)}
+        else:
+            try:
+                monitored = {s["name"] for s in load_sources(args.sources)}
+            except Exception:
+                monitored = None
 
     report = parse_pics_report(args.target)
     gold = parse_pics_report(args.gold) if args.gold else None
